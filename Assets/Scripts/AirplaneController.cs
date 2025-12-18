@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using UnityEngine;
 
@@ -9,6 +8,7 @@ public class AirplaneController : MonoBehaviour
     [SerializeField] private float boostSpeed = 20f;
     [SerializeField] private float pitchSpeed = 50f;
     [SerializeField] private float rollSpeed = 50f;
+    [SerializeField] private float forceArround = 50f;
 
     private InputPlayer inputPlayer;
     private Rigidbody rb;
@@ -43,8 +43,8 @@ public class AirplaneController : MonoBehaviour
         float currentSpeed = inputPlayer.Boost ? boostSpeed : forwardSpeed;
 
         // Постоянное движение вперед через velocity для правильной обработки коллизий
-        rb.velocity = transform.forward * currentSpeed;
-
+        rb.AddForce(transform.forward * currentSpeed, ForceMode.Force);
+        rb.AddForce(-transform.forward * currentSpeed * 0.8f, ForceMode.Force);
         // Вращение через AddRelativeTorque (момент силы в локальных координатах)
         Vector3 torque = Vector3.zero;
         
@@ -67,6 +67,19 @@ public class AirplaneController : MonoBehaviour
         {
             rb.AddRelativeTorque(torque, ForceMode.Force);
         }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        bool obstacle = collision.gameObject.CompareTag("Obstacle");
+        if (obstacle == false) return;
+
+        var forcePoint = collision.contacts[0].point;
+        rb.AddExplosionForce(forceArround,
+            forcePoint,
+            1f);
+
+        Debug.Log($"Contact, position = {forcePoint}, ");
     }
 
     private bool isDie = false;

@@ -44,5 +44,10 @@ public class TargetPoint : MonoBehaviour
         isPassed = false;
         gameObject.SetActive(true);
     }
+
+    public void SetActive(bool flag)
+    {
+        transform.parent.gameObject.SetActive(flag);
+    }
 }
 

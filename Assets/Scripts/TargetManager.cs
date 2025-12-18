@@ -132,7 +132,7 @@ public class TargetManager : MonoBehaviour
             if (targets[i] != null)
             {
                 // Показываем только текущую цель, остальные скрываем
-                targets[i].gameObject.SetActive(i == currentTargetIndex);
+                targets[i].SetActive(i == currentTargetIndex);
             }
         }
     }
