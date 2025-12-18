@@ -1,4 +1,5 @@
 using UnityEngine;
+using static Unity.IO.LowLevel.Unsafe.AsyncReadManagerMetrics;
 
 public class TargetPoint : MonoBehaviour
 {
@@ -42,7 +43,7 @@ public class TargetPoint : MonoBehaviour
     public void ResetTarget()
     {
         isPassed = false;
-        gameObject.SetActive(true);
+        transform.parent.gameObject.SetActive(true);
     }
 
     public void SetActive(bool flag)

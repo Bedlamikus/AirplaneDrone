@@ -1,0 +1,236 @@
+using UnityEngine;
+using TMPro;
+
+public class Scenario : MonoBehaviour
+{
+    [Header("References")]
+    [SerializeField] private Transform airplaneSpawnPoint; // Точка спавна самолета
+    [SerializeField] private AirplaneController airplane; // Ссылка на самолет
+    [SerializeField] private TargetManager targetManager; // Менеджер целей для этого сценария
+    [SerializeField] private TMP_Text endMessageText; // UI текст сообщения об окончании сценария
+    [SerializeField] private TMP_Text timeMessageText; // UI текст сообщения со временем прохождения
+    [SerializeField] private GameObject endMessageUI; // UI объект сообщения (GameObject с TMP_Text)
+
+    [Header("End Messages")]
+    private readonly string[] endMessages = new string[]
+    {
+        "Well done, you did it!",
+        "Fantastic job!",
+        "You're amazing!",
+        "Outstanding work!",
+        "You're a superstar!",
+        "Incredible! You made it!",
+        "Wonderful! You succeeded!",
+        "You're brilliant!",
+        "Amazing effort!",
+        "You're incredible!",
+        "Superb! Well played!",
+        "You're awesome!",
+        "Excellent work!",
+        "You did it! Congratulations!",
+        "Terrific job!",
+        "You're fantastic!",
+        "Marvelous! You completed it!",
+        "You're outstanding!",
+        "Wonderful work!",
+        "You're a champion!"
+    };
+
+    private readonly string[] timeMessages = new string[]
+    {
+        "This level you completed in {0} seconds. Keep it up!",
+        "You finished this level in {0} seconds. Way to go!",
+        "Great job! You completed this level in {0} seconds. Keep going!",
+        "Amazing! This level took you {0} seconds. You're doing great!",
+        "Fantastic! You finished in {0} seconds. Keep it up!",
+        "Wonderful! This level completed in {0} seconds. So proud!",
+        "Excellent! You did it in {0} seconds. Keep going!",
+        "Outstanding! {0} seconds for this level. Way to go!",
+        "Incredible! You finished in {0} seconds. Keep it up!",
+        "Superb! This level took {0} seconds. You're amazing!",
+        "Terrific! Completed in {0} seconds. Keep going!",
+        "Brilliant! You finished this level in {0} seconds. So proud!",
+        "Marvelous! {0} seconds for this level. Keep it up!",
+        "Awesome! You completed it in {0} seconds. Way to go!",
+        "Perfect! This level finished in {0} seconds. Keep going!",
+        "Splendid! You did it in {0} seconds. You're amazing!",
+        "Magnificent! Completed this level in {0} seconds. Keep it up!",
+        "Remarkable! {0} seconds for this level. So proud!",
+        "Impressive! You finished in {0} seconds. Keep going!",
+        "Stellar! This level took {0} seconds. Way to go!"
+    };
+
+    [Header("Scenario State")]
+    private bool isScenarioActive = false;
+    private float scenarioStartTime = 0f;
+    private float scenarioEndTime = 0f;
+
+    private void OnEnable()
+    {
+        GlobalEvents.OnAllTargetsCompleted.AddListener(OnAllTargetsCompleted);
+    }
+
+    private void OnDisable()
+    {
+        GlobalEvents.OnAllTargetsCompleted.RemoveListener(OnAllTargetsCompleted);
+    }
+
+    private void Start()
+    {
+        // Выключаем сообщение об окончании в начале
+        if (endMessageUI != null)
+        {
+            endMessageUI.SetActive(false);
+        }
+    }
+
+    /// <summary>
+    /// Обработчик события завершения всех целей
+    /// </summary>
+    private void OnAllTargetsCompleted()
+    {
+        EndScenario();
+    }
+
+    /// <summary>
+    /// Респавн самолета в точке спавна
+    /// </summary>
+    public void RespawnAirplane()
+    {
+        if (airplane == null || airplaneSpawnPoint == null)
+        {
+            Debug.LogWarning("Scenario: Airplane or spawn point is not assigned!");
+            return;
+        }
+
+        // Размораживаем самолет сначала (делаем его не кинематическим)
+        airplane.Resume();
+
+        // Сбрасываем позицию и поворот самолета
+        airplane.transform.position = airplaneSpawnPoint.position;
+        airplane.transform.rotation = airplaneSpawnPoint.rotation;
+
+        // Сбрасываем физику самолета (после разморозки)
+        Rigidbody rb = airplane.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+    }
+
+    /// <summary>
+    /// Запуск сценария (вызывается при спавне самолета)
+    /// </summary>
+    public void StartScenario()
+    {
+        isScenarioActive = true;
+        scenarioStartTime = Time.time;
+        scenarioEndTime = 0f;
+
+        // Сбрасываем и активируем цели в менеджере целей
+        if (targetManager != null)
+        {
+            targetManager.ResetAllTargets();
+        }
+
+        // Выключаем сообщение об окончании если оно было включено
+        if (endMessageUI != null)
+        {
+            endMessageUI.SetActive(false);
+        }
+        
+        // Очищаем текст
+        if (endMessageText != null)
+        {
+            endMessageText.text = "";
+        }
+        
+        if (timeMessageText != null)
+        {
+            timeMessageText.text = "";
+        }
+    }
+
+    /// <summary>
+    /// Окончание сценария
+    /// </summary>
+    public void EndScenario()
+    {
+        if (!isScenarioActive) return;
+
+        isScenarioActive = false;
+        scenarioEndTime = Time.time;
+
+        // Замораживаем самолет (пауза)
+        if (airplane != null)
+        {
+            airplane.Pause();
+        }
+
+        // Получаем время прохождения сценария
+        float scenarioDuration = GetScenarioTime();
+        int seconds = Mathf.RoundToInt(scenarioDuration);
+
+        // Выбираем случайное сообщение и показываем его
+        if (endMessages.Length > 0)
+        {
+            int randomIndex = Random.Range(0, endMessages.Length);
+            string selectedMessage = endMessages[randomIndex];
+            
+            if (endMessageText != null)
+            {
+                endMessageText.text = selectedMessage;
+            }
+        }
+
+        // Выбираем случайное сообщение со временем и показываем его
+        if (timeMessages.Length > 0 && timeMessageText != null)
+        {
+            int randomTimeIndex = Random.Range(0, timeMessages.Length);
+            string timeMessage = string.Format(timeMessages[randomTimeIndex], seconds);
+            timeMessageText.text = timeMessage;
+        }
+
+        // Показываем UI сообщение об окончании
+        if (endMessageUI != null)
+        {
+            endMessageUI.SetActive(true);
+        }
+    }
+
+    /// <summary>
+    /// Получить время с момента спавна до окончания сценария
+    /// Если сценарий еще не закончился, возвращает текущее время с начала
+    /// </summary>
+    public float GetScenarioTime()
+    {
+        if (!isScenarioActive)
+        {
+            if (scenarioEndTime > 0f)
+            {
+                // Сценарий закончился - возвращаем время до окончания
+                return scenarioEndTime - scenarioStartTime;
+            }
+            else
+            {
+                // Сценарий еще не начинался
+                return 0f;
+            }
+        }
+        else
+        {
+            // Сценарий активен - возвращаем текущее время
+            return Time.time - scenarioStartTime;
+        }
+    }
+
+    /// <summary>
+    /// Проверка активен ли сценарий
+    /// </summary>
+    public bool IsScenarioActive()
+    {
+        return isScenarioActive;
+    }
+}
+

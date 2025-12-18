@@ -66,6 +66,7 @@ public class TargetManager : MonoBehaviour
                 if (currentTargetIndex >= targets.Count)
                 {
                     Debug.Log("All targets completed!");
+                    GlobalEvents.OnAllTargetsCompleted?.Invoke();
                 }
             }
             else

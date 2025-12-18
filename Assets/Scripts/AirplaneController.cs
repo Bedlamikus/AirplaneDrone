@@ -12,6 +12,7 @@ public class AirplaneController : MonoBehaviour
 
     private InputPlayer inputPlayer;
     private Rigidbody rb;
+    private bool isPaused = false;
 
     private void Start()
     {
@@ -32,12 +33,11 @@ public class AirplaneController : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         rb.useGravity = false; // Отключаем гравитацию для самолета
-        rb.drag = 0f; // Отключаем сопротивление воздуха для прямолинейного движения
     }
 
     private void FixedUpdate()
     {
-        if (inputPlayer == null || rb == null) return;
+        if (inputPlayer == null || rb == null || isPaused) return;
 
         // Определяем текущую скорость в зависимости от нажатия пробела
         float currentSpeed = inputPlayer.Boost ? boostSpeed : forwardSpeed;
@@ -95,6 +95,28 @@ public class AirplaneController : MonoBehaviour
     private IEnumerator DieRoutine()
     {
         yield return null;
+    }
+
+    public void Pause()
+    {
+        if (isPaused) return;
+        
+        isPaused = true;
+        if (rb != null)
+        {
+            rb.isKinematic = true; // Замораживаем физику
+        }
+    }
+
+    public void Resume()
+    {
+        if (!isPaused) return;
+        
+        isPaused = false;
+        if (rb != null)
+        {
+            rb.isKinematic = false; // Размораживаем физику
+        }
     }
 }
 
