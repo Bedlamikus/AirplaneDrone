@@ -9794,8 +9794,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   forwardSpeed: 10
   boostSpeed: 20
-  pitchSpeed: 70
-  rollSpeed: 200
+  pitchSpeed: 5
+  rollSpeed: 5
 --- !u!4 &1832034080
 Transform:
   m_ObjectHideFlags: 0
@@ -9828,7 +9828,7 @@ Rigidbody:
   serializedVersion: 4
   m_Mass: 1
   m_Drag: 0
-  m_AngularDrag: 0.05
+  m_AngularDrag: 3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}

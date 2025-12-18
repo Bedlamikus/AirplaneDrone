@@ -13,19 +13,11 @@ public class TargetPoint : MonoBehaviour
         // Проверяем, что цель еще не пройдена
         if (isPassed) return;
 
-        // Проверяем, что в other.transform.parent лежит самолет
-        if (other.transform.parent != null)
-        {
-            AirplaneController airplane = other.transform.parent.GetComponent<AirplaneController>();
-            if (airplane != null)
-            {
-                // Цель зачтена - отправляем событие с id цели
-                isPassed = true;
-                GlobalEvents.OnTargetPassed?.Invoke(targetId);
-                
-                // Видимость цели управляется TargetManager
-            }
-        }
+        AirplaneController airplane = other.GetComponent<AirplaneController>();
+        if (airplane == null) return;
+
+        isPassed = true;
+        GlobalEvents.OnTargetPassed?.Invoke(targetId);
     }
 
     /// <summary>

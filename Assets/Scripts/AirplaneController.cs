@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
 public class AirplaneController : MonoBehaviour
@@ -31,7 +33,6 @@ public class AirplaneController : MonoBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         rb.useGravity = false; // Отключаем гравитацию для самолета
         rb.drag = 0f; // Отключаем сопротивление воздуха для прямолинейного движения
-        rb.angularDrag = 0f; // Отключаем угловое сопротивление
     }
 
     private void FixedUpdate()
@@ -66,6 +67,21 @@ public class AirplaneController : MonoBehaviour
         {
             rb.AddRelativeTorque(torque, ForceMode.Force);
         }
+    }
+
+    private bool isDie = false;
+
+    internal void Die()
+    {
+        if (isDie == true) return;
+        
+        isDie = true;
+        StartCoroutine(DieRoutine());
+    }
+
+    private IEnumerator DieRoutine()
+    {
+        yield return null;
     }
 }
 
