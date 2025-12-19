@@ -16,8 +16,8 @@ public class CameraController : MonoBehaviour
     {
         if (inputPlayer == null) return;
 
-        // Вращение камеры только при зажатой правой кнопке мыши
-        if (inputPlayer.RightMouseButton)
+        // Вращение камеры при зажатой правой кнопке мыши или сенсорном вводе
+        if (inputPlayer.RightMouseButton || inputPlayer.IsCameraRotating)
         {
             float mouseX = inputPlayer.MouseX;
             float mouseY = inputPlayer.MouseY;
@@ -29,6 +29,7 @@ public class CameraController : MonoBehaviour
             transform.localEulerAngles = currentRotation;
         }
     }
+
 
     private void LateUpdate()
     {

@@ -10,18 +10,13 @@ public class AirplaneController : MonoBehaviour
     [SerializeField] private float rollSpeed = 50f;
     [SerializeField] private float forceArround = 50f;
 
-    private InputPlayer inputPlayer;
+    [SerializeField] private InputPlayer inputPlayer;
+
     private Rigidbody rb;
     private bool isPaused = false;
 
     private void Start()
     {
-        inputPlayer = GetComponent<InputPlayer>();
-        if (inputPlayer == null)
-        {
-            inputPlayer = gameObject.AddComponent<InputPlayer>();
-        }
-
         // Получаем или добавляем Rigidbody
         rb = GetComponent<Rigidbody>();
         if (rb == null)
