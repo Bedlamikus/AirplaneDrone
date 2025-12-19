@@ -6,6 +6,7 @@ public class InputPlayer : MonoBehaviour
     [SerializeField] private FixedJoystick joystick; // Мобильный джойстик (назначается в инспекторе)
     [SerializeField] private bool isMobilePlatform = false;
     [SerializeField] private TouchCameraControl touchCameraControl; // Контроллер сенсорного управления камерой
+    [SerializeField] private BoostButton boostButton;
 
     // Собранные значения ввода
     public float Pitch { get; private set; }      // W/S или джойстик Vertical - наклон носа
@@ -15,8 +16,6 @@ public class InputPlayer : MonoBehaviour
     public bool RightMouseButton { get; private set; } // Правая кнопка мыши
     public bool Boost { get; private set; }      // Пробел - ускорение
     public bool IsCameraRotating { get; private set; } // Флаг вращения камеры (для сенсорного ввода)
-
-    private bool isTouchInputActive = false; // Флаг активного сенсорного ввода
 
     private void Start()
     {
@@ -44,6 +43,11 @@ public class InputPlayer : MonoBehaviour
         if (touchCameraControl != null)
         {
             touchCameraControl.gameObject.SetActive(isMobilePlatform);
+        }
+
+        if (boostButton != null)
+        {
+            boostButton.gameObject.SetActive(isMobilePlatform);
         }
     }
 
@@ -88,7 +92,6 @@ public class InputPlayer : MonoBehaviour
             MouseX = touchCameraControl.TouchDeltaX;
             MouseY = touchCameraControl.TouchDeltaY;
             IsCameraRotating = true;
-            isTouchInputActive = true;
         }
         else
         {
@@ -96,7 +99,6 @@ public class InputPlayer : MonoBehaviour
             MouseX = Input.GetAxis("Mouse X");
             MouseY = Input.GetAxis("Mouse Y");
             IsCameraRotating = Input.GetMouseButton(1);
-            isTouchInputActive = false;
         }
 
         // Правая кнопка мыши
@@ -104,6 +106,8 @@ public class InputPlayer : MonoBehaviour
 
         // Пробел - ускорение
         Boost = Input.GetKey(KeyCode.Space);
+        if (isMobilePlatform == true)
+            Boost = boostButton.isBoost;
     }
 
 }
