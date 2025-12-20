@@ -1,4 +1,6 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class TVStaticController : MonoBehaviour
 {
@@ -19,7 +21,10 @@ public class TVStaticController : MonoBehaviour
     [Header("Scanline Settings")]
     [SerializeField] private float scanlineFrequency = 200f;
     [SerializeField] [Range(0f, 1f)] private float scanlineIntensity = 0.3f;
-    
+
+    [Header("Message signal lost")]
+    [SerializeField] private Image lostSignalUIMessage;
+
     private bool materialIsInstance = false; // Флаг, указывающий, был ли материал создан автоматически
     private bool hasTriggeredOutOfBounds = false; // Флаг для предотвращения повторных вызовов события
     
@@ -52,6 +57,8 @@ public class TVStaticController : MonoBehaviour
                 playerTransform = inputPlayer.transform;
             }
         }
+
+        StartCoroutine(LostSignalRoutine());
     }
     
     private void Update()
@@ -110,6 +117,42 @@ public class TVStaticController : MonoBehaviour
         {
             Destroy(staticMaterial);
         }
+    }
+
+    private IEnumerator LostSignalRoutine()
+    {
+        while (true)
+        {
+            float currentRadius = (playerTransform.position - centerPosition).magnitude;
+            float alpha = Mathf.Clamp(currentRadius - minRadius, 0, maxRadius - currentRadius);
+            
+            if (alpha > 0)
+            {
+                alpha = alpha / (maxRadius - minRadius);
+            }
+            print(alpha);
+            Debug.Log($"minRadius = {minRadius}, currentRadius = {currentRadius}, maxRadius = {maxRadius}");
+            yield return TransparentSignalMessage(alpha);
+            yield return TransparentSignalMessage(0f);
+        }
+    }
+
+    private IEnumerator TransparentSignalMessage(float alpha)
+    {
+        var color = lostSignalUIMessage.color;
+        var startAlpha = color.a;
+        float needTime = 0.1f;
+        float timer = 0f;
+        while (timer < needTime)
+        {
+            timer += Time.deltaTime;
+            float a = Mathf.Lerp(startAlpha, alpha, timer / needTime);
+            color.a = a;
+            lostSignalUIMessage.color = color;
+            yield return null;
+        }
+        color.a = alpha;
+        lostSignalUIMessage.color = color;
     }
 }
 
