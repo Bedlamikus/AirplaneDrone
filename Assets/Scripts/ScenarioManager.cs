@@ -11,11 +11,13 @@ public class ScenarioManager : MonoBehaviour
     private void OnEnable()
     {
         GlobalEvents.OnStartNewScenario.AddListener(OnStartNewScenario);
+        GlobalEvents.OnRestartCurrentScenario.AddListener(OnRestartCurrentScenario);
     }
 
     private void OnDisable()
     {
         GlobalEvents.OnStartNewScenario.RemoveListener(OnStartNewScenario);
+        GlobalEvents.OnRestartCurrentScenario.RemoveListener(OnRestartCurrentScenario);
     }
 
     private void Start()
@@ -54,6 +56,14 @@ public class ScenarioManager : MonoBehaviour
             // Запускаем конкретный сценарий по индексу
             StartScenario(scenarioIndex);
         }
+    }
+
+    /// <summary>
+    /// Обработчик события перезапуска текущего сценария
+    /// </summary>
+    private void OnRestartCurrentScenario()
+    {
+        RestartCurrentScenario();
     }
 
     /// <summary>
@@ -132,6 +142,39 @@ public class ScenarioManager : MonoBehaviour
         if (index >= 0 && index < scenarios.Count)
         {
             currentScenarioIndex = index;
+        }
+    }
+
+    /// <summary>
+    /// Перезапустить текущий активный сценарий
+    /// </summary>
+    public void RestartCurrentScenario()
+    {
+        if (scenarios.Count == 0)
+        {
+            Debug.LogWarning("ScenarioManager: No scenarios in list!");
+            return;
+        }
+
+        // Находим активный сценарий
+        int activeScenarioIndex = -1;
+        for (int i = 0; i < scenarios.Count; i++)
+        {
+            if (scenarios[i] != null && scenarios[i].gameObject.activeSelf)
+            {
+                activeScenarioIndex = i;
+                break;
+            }
+        }
+
+        if (activeScenarioIndex >= 0)
+        {
+            // Перезапускаем найденный активный сценарий
+            StartScenario(activeScenarioIndex);
+        }
+        else
+        {
+            Debug.LogWarning("ScenarioManager: No active scenario found to restart!");
         }
     }
 }

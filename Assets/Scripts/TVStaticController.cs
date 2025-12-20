@@ -21,6 +21,7 @@ public class TVStaticController : MonoBehaviour
     [SerializeField] [Range(0f, 1f)] private float scanlineIntensity = 0.3f;
     
     private bool materialIsInstance = false; // Флаг, указывающий, был ли материал создан автоматически
+    private bool hasTriggeredOutOfBounds = false; // Флаг для предотвращения повторных вызовов события
     
     private void Start()
     {
@@ -61,6 +62,9 @@ public class TVStaticController : MonoBehaviour
         if (playerTransform != null)
         {
             staticMaterial.SetVector("_PlayerPosition", playerTransform.position);
+            
+            // Проверяем границы
+            CheckBoundaries();
         }
         
         // Обновляем остальные параметры
@@ -72,6 +76,30 @@ public class TVStaticController : MonoBehaviour
         staticMaterial.SetFloat("_NoiseIntensity", noiseIntensity);
         staticMaterial.SetFloat("_ScanlineFrequency", scanlineFrequency);
         staticMaterial.SetFloat("_ScanlineIntensity", scanlineIntensity);
+    }
+
+    /// <summary>
+    /// Проверка выхода самолета за границы
+    /// </summary>
+    private void CheckBoundaries()
+    {
+        if (playerTransform == null) return;
+
+        // Вычисляем расстояние от центра до игрока
+        float distance = Vector3.Distance(playerTransform.position, centerPosition);
+
+        // Если самолет вышел за максимальную границу и событие еще не было вызвано, вызываем событие
+        if (distance >= maxRadius && !hasTriggeredOutOfBounds)
+        {
+            hasTriggeredOutOfBounds = true;
+            GlobalEvents.OnAirplaneOutOfBounds?.Invoke();
+        }
+        
+        // Если самолет вернулся обратно в границы, сбрасываем флаг для возможности повторного вызова
+        if (distance < maxRadius)
+        {
+            hasTriggeredOutOfBounds = false;
+        }
     }
     
     private void OnDestroy()

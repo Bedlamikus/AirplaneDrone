@@ -10,6 +10,8 @@ public class Scenario : MonoBehaviour
     [SerializeField] private TMP_Text endMessageText; // UI текст сообщения об окончании сценария
     [SerializeField] private TMP_Text timeMessageText; // UI текст сообщения со временем прохождения
     [SerializeField] private GameObject endMessageUI; // UI объект сообщения (GameObject с TMP_Text)
+    [SerializeField] private TMP_Text outOfBoundsMessageText; // UI текст сообщения о выходе за границы
+    [SerializeField] private GameObject outOfBoundsMessageUI; // UI объект сообщения о выходе за границы
 
     [Header("End Messages")]
     private readonly string[] endMessages = new string[]
@@ -60,6 +62,30 @@ public class Scenario : MonoBehaviour
         "Stellar! This level took {0} seconds. Way to go!"
     };
 
+    private readonly string[] outOfBoundsMessages = new string[]
+    {
+        "You went out of bounds! Stay in the zone!",
+        "Out of bounds! Please stay within the area!",
+        "You left the safe zone! Get back in bounds!",
+        "Boundary exceeded! Return to the play area!",
+        "You're out of bounds! Stay within limits!",
+        "Boundary violation! Please stay inside!",
+        "You went too far! Keep within bounds!",
+        "Out of range! Stay in the designated area!",
+        "Boundary crossed! Return to safe zone!",
+        "You're outside the zone! Get back in!",
+        "Boundary exceeded! Stay within limits!",
+        "Out of bounds detected! Return to play area!",
+        "You left the safe area! Stay in bounds!",
+        "Boundary violation! Get back inside!",
+        "You're out of range! Stay within the zone!",
+        "Boundary crossed! Please stay inside!",
+        "Out of bounds! Keep within the area!",
+        "You went too far! Stay in bounds!",
+        "Boundary exceeded! Return to safe area!",
+        "Out of zone! Stay within the limits!"
+    };
+
     [Header("Scenario State")]
     private bool isScenarioActive = false;
     private float scenarioStartTime = 0f;
@@ -68,11 +94,13 @@ public class Scenario : MonoBehaviour
     private void OnEnable()
     {
         GlobalEvents.OnAllTargetsCompleted.AddListener(OnAllTargetsCompleted);
+        GlobalEvents.OnAirplaneOutOfBounds.AddListener(OnAirplaneOutOfBounds);
     }
 
     private void OnDisable()
     {
         GlobalEvents.OnAllTargetsCompleted.RemoveListener(OnAllTargetsCompleted);
+        GlobalEvents.OnAirplaneOutOfBounds.RemoveListener(OnAirplaneOutOfBounds);
     }
 
     private void Start()
@@ -82,6 +110,12 @@ public class Scenario : MonoBehaviour
         {
             endMessageUI.SetActive(false);
         }
+        
+        // Выключаем сообщение о выходе за границы в начале
+        if (outOfBoundsMessageUI != null)
+        {
+            outOfBoundsMessageUI.SetActive(false);
+        }
     }
 
     /// <summary>
@@ -90,6 +124,45 @@ public class Scenario : MonoBehaviour
     private void OnAllTargetsCompleted()
     {
         EndScenario();
+    }
+
+    /// <summary>
+    /// Обработчик события выхода самолета за границы
+    /// </summary>
+    private void OnAirplaneOutOfBounds()
+    {
+        // Ставим самолет на паузу
+        if (airplane != null)
+        {
+            airplane.Pause();
+        }
+
+        // Показываем сообщение о выходе за границы
+        ShowOutOfBoundsMessage();
+    }
+
+    /// <summary>
+    /// Показать сообщение о выходе за границы
+    /// </summary>
+    private void ShowOutOfBoundsMessage()
+    {
+        // Выбираем случайное сообщение о выходе за границы
+        if (outOfBoundsMessages.Length > 0)
+        {
+            int randomIndex = Random.Range(0, outOfBoundsMessages.Length);
+            string selectedMessage = outOfBoundsMessages[randomIndex];
+            
+            if (outOfBoundsMessageText != null)
+            {
+                outOfBoundsMessageText.text = selectedMessage;
+            }
+        }
+
+        // Показываем UI сообщение о выходе за границы
+        if (outOfBoundsMessageUI != null)
+        {
+            outOfBoundsMessageUI.SetActive(true);
+        }
     }
 
     /// <summary>
@@ -140,6 +213,12 @@ public class Scenario : MonoBehaviour
             endMessageUI.SetActive(false);
         }
         
+        // Выключаем сообщение о выходе за границы если оно было включено
+        if (outOfBoundsMessageUI != null)
+        {
+            outOfBoundsMessageUI.SetActive(false);
+        }
+        
         // Очищаем текст
         if (endMessageText != null)
         {
@@ -149,6 +228,11 @@ public class Scenario : MonoBehaviour
         if (timeMessageText != null)
         {
             timeMessageText.text = "";
+        }
+        
+        if (outOfBoundsMessageText != null)
+        {
+            outOfBoundsMessageText.text = "";
         }
     }
 

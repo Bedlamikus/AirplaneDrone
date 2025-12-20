@@ -7,6 +7,6 @@ public class DeadZone : MonoBehaviour
         var airplane = other.GetComponent<AirplaneController>();
         if (airplane == null) return;
 
-        airplane.Die();
+       airplane.Die();
     }
 }
