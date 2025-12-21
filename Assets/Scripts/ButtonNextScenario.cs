@@ -18,10 +18,6 @@ public class ButtonNextScenario : MonoBehaviour
         {
             button.onClick.AddListener(OnButtonClick);
         }
-        else
-        {
-            Debug.LogWarning("ButtonNextScenario: Button component not found!");
-        }
     }
 
     private void OnDestroy()

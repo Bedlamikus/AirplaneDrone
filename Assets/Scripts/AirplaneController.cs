@@ -28,6 +28,9 @@ public class AirplaneController : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         rb.useGravity = false; // Отключаем гравитацию для самолета
+        
+        // Подписываемся на событие выстрела, чтобы передать скорость
+        GlobalEvents.OnFire.AddListener(OnFireEvent);
     }
 
     private void FixedUpdate()
@@ -112,6 +115,21 @@ public class AirplaneController : MonoBehaviour
         {
             rb.isKinematic = false; // Размораживаем физику
         }
+    }
+    
+    private void OnFireEvent()
+    {
+        // При выстреле передаем текущую скорость самолета
+        if (rb != null)
+        {
+            GlobalEvents.OnAirplaneVelocity?.Invoke(rb.velocity);
+        }
+    }
+    
+    private void OnDestroy()
+    {
+        // Отписываемся от события при уничтожении
+        GlobalEvents.OnFire.RemoveListener(OnFireEvent);
     }
 }
 

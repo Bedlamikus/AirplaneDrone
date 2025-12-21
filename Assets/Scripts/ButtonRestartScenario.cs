@@ -18,10 +18,6 @@ public class ButtonRestartScenario : MonoBehaviour
         {
             button.onClick.AddListener(OnButtonClick);
         }
-        else
-        {
-            Debug.LogWarning("ButtonRestartScenario: Button component not found!");
-        }
     }
 
     private void OnDestroy()

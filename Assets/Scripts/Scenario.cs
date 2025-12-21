@@ -176,9 +176,6 @@ public class Scenario : MonoBehaviour
             return;
         }
 
-        // Размораживаем самолет сначала (делаем его не кинематическим)
-        airplane.Resume();
-
         // Сбрасываем позицию и поворот самолета
         airplane.transform.position = airplaneSpawnPoint.position;
         airplane.transform.rotation = airplaneSpawnPoint.rotation;
@@ -190,6 +187,9 @@ public class Scenario : MonoBehaviour
             rb.velocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
+        // Размораживаем самолет сначала (делаем его не кинематическим)
+        airplane.Resume();
+
     }
 
     /// <summary>
