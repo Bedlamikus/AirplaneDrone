@@ -120,6 +120,8 @@ public class ScenarioManager : MonoBehaviour
         Debug.Log($"ScenarioManager: Starting scenario {index}");
 
         // Респавним самолет в точке спавна сценария
+        // (ШАГ а - скрытие UI/шума происходит в обработчиках OnRestartCurrentScenario,
+        //  которые вызываются ПЕРЕД этим методом через событие от кнопки)
         scenario.RespawnAirplane();
 
         // Запускаем сценарий

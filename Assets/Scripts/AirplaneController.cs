@@ -28,6 +28,7 @@ public class AirplaneController : MonoBehaviour
     private bool hasValidLandingPoint = false;
     private Projectile currentProjectile = null; // Текущий снаряд
     private bool isRespawning = false; // Флаг процесса респавна
+    private bool isOutOfBounds = false; // Флаг выхода за границы
 
     private void Start()
     {
@@ -45,6 +46,10 @@ public class AirplaneController : MonoBehaviour
         
         // Подписываемся на событие выстрела, чтобы передать скорость
         GlobalEvents.OnFire.AddListener(OnFireEvent);
+        
+        // Подписываемся на события выхода за границы и рестарта сценария
+        GlobalEvents.OnAirplaneOutOfBounds.AddListener(OnAirplaneOutOfBounds);
+        GlobalEvents.OnRestartCurrentScenario.AddListener(OnRestartScenario);
         
         // Скрываем маркер места падения при старте
         if (landingPointMarker != null)
@@ -126,7 +131,8 @@ public class AirplaneController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (inputPlayer == null || rb == null || isPaused) return;
+        // Не обновляем физику, если самолет на паузе или вышел за границы
+        if (inputPlayer == null || rb == null || isPaused || isOutOfBounds) return;
 
         // Определяем текущую скорость в зависимости от нажатия пробела
         float currentSpeed = inputPlayer.Boost ? boostSpeed : forwardSpeed;
@@ -160,6 +166,9 @@ public class AirplaneController : MonoBehaviour
     
     private void Update()
     {
+        // Не обновляем ничего, если самолет вышел за границы
+        if (isOutOfBounds) return;
+        
         // Обновляем маркер места падения на основе текущей скорости самолета
         if (landingPointMarker != null && !isPaused && rb != null)
         {
@@ -168,6 +177,15 @@ public class AirplaneController : MonoBehaviour
     }
     
     private void UpdateLandingMarker()
+    {
+        UpdateLandingMarker(false);
+    }
+    
+    /// <summary>
+    /// Обновить маркер места падения
+    /// </summary>
+    /// <param name="instant">Если true, маркер переместится мгновенно, иначе плавно</param>
+    private void UpdateLandingMarker(bool instant)
     {
         // Получаем позицию точки выстрела (если есть projectileSpawnPoint, иначе используем позицию самолета)
         Vector3 firePosition = projectileSpawnPoint != null ? projectileSpawnPoint.position : transform.position;
@@ -191,12 +209,21 @@ public class AirplaneController : MonoBehaviour
                 landingPointMarker.gameObject.SetActive(true);
             }
             
-            // Плавно перемещаем маркер к расчетной точке
-            landingPointMarker.position = Vector3.MoveTowards(
-                landingPointMarker.position,
-                calculatedLandingPoint,
-                landingMarkerMoveSpeed * Time.deltaTime
-            );
+            // Перемещаем маркер к расчетной точке
+            if (instant)
+            {
+                // Мгновенное перемещение
+                landingPointMarker.position = calculatedLandingPoint;
+            }
+            else
+            {
+                // Плавное перемещение
+                landingPointMarker.position = Vector3.MoveTowards(
+                    landingPointMarker.position,
+                    calculatedLandingPoint,
+                    landingMarkerMoveSpeed * Time.deltaTime
+                );
+            }
         }
         else
         {
@@ -205,6 +232,17 @@ public class AirplaneController : MonoBehaviour
             {
                 landingPointMarker.gameObject.SetActive(false);
             }
+        }
+    }
+    
+    /// <summary>
+    /// Принудительно обновить маркер места падения (мгновенно)
+    /// </summary>
+    public void ForceUpdateLandingMarker()
+    {
+        if (landingPointMarker != null && rb != null)
+        {
+            UpdateLandingMarker(true);
         }
     }
 
@@ -313,10 +351,43 @@ public class AirplaneController : MonoBehaviour
         Debug.Log("AirplaneController: Respawn routine completed");
     }
     
+    /// <summary>
+    /// Обработчик события выхода самолета за границы
+    /// </summary>
+    private void OnAirplaneOutOfBounds()
+    {
+        // Сразу ставим самолет на паузу и останавливаем все обновления
+        isOutOfBounds = true;
+        Pause();
+        
+        // Останавливаем все физические силы
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+        
+        Debug.Log("AirplaneController: Airplane out of bounds - paused and stopped all updates");
+    }
+    
+    /// <summary>
+    /// Обработчик события рестарта сценария
+    /// </summary>
+    private void OnRestartScenario()
+    {
+        // Сбрасываем флаг выхода за границы, чтобы обновления снова заработали
+        // Самолет будет перенесен и разморожен в Scenario.RespawnAirplane()
+        isOutOfBounds = false;
+        
+        Debug.Log("AirplaneController: Scenario restart - reset out of bounds flag");
+    }
+    
     private void OnDestroy()
     {
-        // Отписываемся от события при уничтожении
+        // Отписываемся от событий при уничтожении
         GlobalEvents.OnFire.RemoveListener(OnFireEvent);
+        GlobalEvents.OnAirplaneOutOfBounds.RemoveListener(OnAirplaneOutOfBounds);
+        GlobalEvents.OnRestartCurrentScenario.RemoveListener(OnRestartScenario);
     }
 }
 

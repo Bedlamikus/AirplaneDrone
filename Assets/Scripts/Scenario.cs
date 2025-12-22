@@ -153,13 +153,8 @@ public class Scenario : MonoBehaviour
     /// </summary>
     private void OnAirplaneOutOfBounds()
     {
-        // Ставим самолет на паузу
-        if (airplane != null)
-        {
-            airplane.Pause();
-        }
-
-        // Показываем сообщение о выходе за границы
+        // Самолет останавливается в AirplaneController.OnAirplaneOutOfBounds()
+        // Здесь только показываем UI сообщение
         ShowOutOfBoundsMessage();
     }
 
@@ -200,11 +195,24 @@ public class Scenario : MonoBehaviour
 
         Debug.Log($"Scenario: RespawnAirplane called, moving from {airplane.transform.position} to {airplaneSpawnPoint.position}");
 
-        // Сбрасываем позицию и поворот самолета
+        // ШАГ а) Сначала скрываем UI сообщение о выходе за границы
+        if (outOfBoundsMessageUI != null)
+        {
+            outOfBoundsMessageUI.SetActive(false);
+        }
+        
+        // Очищаем текст сообщения
+        if (outOfBoundsMessageText != null)
+        {
+            outOfBoundsMessageText.text = "";
+        }
+
+        // ШАГ б) Сбрасываем позицию и поворот самолета
         airplane.transform.position = airplaneSpawnPoint.position;
         airplane.transform.rotation = airplaneSpawnPoint.rotation;
 
-        // Размораживаем самолет сначала (делаем его не кинематическим)
+        // Размораживаем самолет (делаем его не кинематическим)
+        // Флаг isOutOfBounds уже сброшен в AirplaneController.OnRestartScenario()
         airplane.Resume();
         
         // Сбрасываем физику самолета (после разморозки)
@@ -215,14 +223,16 @@ public class Scenario : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
         }
         
-        // Скрываем сообщение о выходе за границы
-        if (outOfBoundsMessageUI != null)
+        // Мгновенно обновляем маркер места падения снаряда на новую позицию
+        AirplaneController airplaneController = airplane.GetComponent<AirplaneController>();
+        if (airplaneController != null)
         {
-            outOfBoundsMessageUI.SetActive(false);
+            airplaneController.ForceUpdateLandingMarker();
         }
         
         Debug.Log($"Scenario: Airplane respawned at {airplane.transform.position}");
 
+        // Вызываем событие старта сценария (ШАГ в - определение зоны начнет работать через 1 секунду в TVStaticController)
         GlobalEvents.OnScenarioStart.Invoke();
     }
 

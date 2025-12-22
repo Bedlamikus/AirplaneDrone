@@ -27,6 +27,8 @@ public class TVStaticController : MonoBehaviour
 
     private bool materialIsInstance = false; // Флаг, указывающий, был ли материал создан автоматически
     private bool hasTriggeredOutOfBounds = false; // Флаг для предотвращения повторных вызовов события
+    private bool isRestartCooldown = false; // Флаг блокировки проверки зоны во время рестарта
+    private float restartCooldownEndTime = 0f; // Время окончания блокировки проверки зоны
     
     private void Start()
     {
@@ -61,12 +63,29 @@ public class TVStaticController : MonoBehaviour
         StartCoroutine(LostSignalRoutine());
 
         GlobalEvents.OnScenarioStart.AddListener(RestartFlag);
+        GlobalEvents.OnRestartCurrentScenario.AddListener(OnRestartScenario);
     }
     
     private void RestartFlag()
     {
         isRestarting = false;
         hasTriggeredOutOfBounds = false;
+    }
+    
+    /// <summary>
+    /// Обработчик события рестарта сценария - блокируем проверку зоны на 1 секунду
+    /// </summary>
+    private void OnRestartScenario()
+    {
+        // Сбрасываем позицию игрока в шейдере в 0
+        if (staticMaterial != null)
+        {
+            staticMaterial.SetVector("_PlayerPosition", Vector3.zero);
+        }
+        
+        // Блокируем проверку зоны на 1 секунду
+        isRestartCooldown = true;
+        restartCooldownEndTime = Time.time + 1f;
     }
 
     private bool isRestarting = false;
@@ -76,13 +95,19 @@ public class TVStaticController : MonoBehaviour
         if (staticMaterial == null) return;
 
         if (isRestarting) return;
-
-        // Обновляем позицию игрока в шейдере
-        if (playerTransform != null)
+        
+        // Проверяем, не истекла ли блокировка проверки зоны при рестарте
+        if (isRestartCooldown && Time.time >= restartCooldownEndTime)
+        {
+            isRestartCooldown = false;
+        }
+        
+        // Обновляем позицию игрока в шейдере только если нет блокировки рестарта
+        if (playerTransform != null && !isRestartCooldown)
         {
             staticMaterial.SetVector("_PlayerPosition", playerTransform.position);
             
-            // Проверяем границы
+            // Проверяем границы только если нет блокировки
             CheckBoundaries();
         }
         
@@ -124,6 +149,10 @@ public class TVStaticController : MonoBehaviour
     
     private void OnDestroy()
     {
+        // Отписываемся от событий
+        GlobalEvents.OnScenarioStart.RemoveListener(RestartFlag);
+        GlobalEvents.OnRestartCurrentScenario.RemoveListener(OnRestartScenario);
+        
         // Уничтожаем только instance материалы, созданные автоматически
         // Не трогаем оригинальные материалы из проекта
         if (staticMaterial != null && Application.isPlaying && materialIsInstance)
