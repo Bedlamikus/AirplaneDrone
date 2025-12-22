@@ -130,8 +130,6 @@ public class TVStaticController : MonoBehaviour
             {
                 alpha = alpha / (maxRadius - minRadius);
             }
-            print(alpha);
-            Debug.Log($"minRadius = {minRadius}, currentRadius = {currentRadius}, maxRadius = {maxRadius}");
             yield return TransparentSignalMessage(alpha);
             yield return TransparentSignalMessage(0f);
         }

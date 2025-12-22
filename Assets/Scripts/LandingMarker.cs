@@ -15,8 +15,6 @@ public class LandingMarker : MonoBehaviour
     [SerializeField] private bool useDrag = false; // Использовать ли расчет с учетом drag (медленнее)
     [SerializeField] private float drag = 0f; // Коэффициент сопротивления воздуха (если useDrag = true)
     
-    [Header("Visualization")]
-    [SerializeField] private bool showDebugRay = false; // Показывать ли луч от снаряда до точки падения
     
     private Vector3 currentVelocity = Vector3.zero;
     private Vector3 currentPosition = Vector3.zero;
@@ -115,12 +113,6 @@ public class LandingMarker : MonoBehaviour
         {
             lastCalculatedLandingPoint = landingPoint;
             markerTransform.position = landingPoint;
-            
-            // Показываем луч от снаряда до точки падения (для отладки)
-            if (showDebugRay && projectileTransform != null)
-            {
-                Debug.DrawLine(projectileTransform.position, landingPoint, Color.red, updateInterval);
-            }
         }
     }
     

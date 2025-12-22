@@ -180,6 +180,9 @@ public class Scenario : MonoBehaviour
         airplane.transform.position = airplaneSpawnPoint.position;
         airplane.transform.rotation = airplaneSpawnPoint.rotation;
 
+        // Размораживаем самолет сначала (делаем его не кинематическим)
+        airplane.Resume();
+        
         // Сбрасываем физику самолета (после разморозки)
         Rigidbody rb = airplane.GetComponent<Rigidbody>();
         if (rb != null)
@@ -187,8 +190,6 @@ public class Scenario : MonoBehaviour
             rb.velocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
-        // Размораживаем самолет сначала (делаем его не кинематическим)
-        airplane.Resume();
 
     }
 
