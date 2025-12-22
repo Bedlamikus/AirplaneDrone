@@ -120,6 +120,8 @@ public class AirplaneController : MonoBehaviour
     private void OnFireEvent()
     {
         // При выстреле передаем текущую скорость самолета
+        // ВАЖНО: Это событие вызывается ДО события Fire, так как подписчики вызываются в порядке подписки
+        // Но лучше перестраховаться и вызывать скорость отдельно перед Fire в FireButton
         if (rb != null)
         {
             GlobalEvents.OnAirplaneVelocity?.Invoke(rb.velocity);
