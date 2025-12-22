@@ -59,12 +59,24 @@ public class TVStaticController : MonoBehaviour
         }
 
         StartCoroutine(LostSignalRoutine());
+
+        GlobalEvents.OnScenarioStart.AddListener(RestartFlag);
     }
     
+    private void RestartFlag()
+    {
+        isRestarting = false;
+        hasTriggeredOutOfBounds = false;
+    }
+
+    private bool isRestarting = false;
+
     private void Update()
     {
         if (staticMaterial == null) return;
-        
+
+        if (isRestarting) return;
+
         // Обновляем позицию игрока в шейдере
         if (playerTransform != null)
         {
@@ -99,6 +111,7 @@ public class TVStaticController : MonoBehaviour
         if (distance >= maxRadius && !hasTriggeredOutOfBounds)
         {
             hasTriggeredOutOfBounds = true;
+            isRestarting = true;
             GlobalEvents.OnAirplaneOutOfBounds?.Invoke();
         }
         

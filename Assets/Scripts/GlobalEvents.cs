@@ -20,8 +20,11 @@ public static class GlobalEvents
     
     // Событие выстрела снаряда
     public static UnityEvent OnFire = new();
-    
+
     // Событие передачи скорости самолета (передается вектор скорости)
+
     public static UnityEvent<Vector3> OnAirplaneVelocity = new();
+
+    public static UnityEvent OnScenarioStart = new();
 }
 

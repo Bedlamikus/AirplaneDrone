@@ -198,10 +198,13 @@ public class AirplaneController : MonoBehaviour
                 landingMarkerMoveSpeed * Time.deltaTime
             );
         }
-        else if (landingPointMarker.gameObject.activeSelf)
+        else
         {
-            // Скрываем маркер, если нет валидной точки падения
-            landingPointMarker.gameObject.SetActive(false);
+            // Скрываем маркер, если нет валидной точки падения (снаряд не достигнет уровня земли)
+            if (landingPointMarker.gameObject.activeSelf)
+            {
+                landingPointMarker.gameObject.SetActive(false);
+            }
         }
     }
 

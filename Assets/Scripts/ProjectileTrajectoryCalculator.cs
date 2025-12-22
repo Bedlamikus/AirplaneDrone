@@ -40,7 +40,7 @@ public static class ProjectileTrajectoryCalculator
         // Если дискриминант отрицательный, снаряд никогда не достигнет уровня земли
         if (discriminant < 0)
         {
-            Debug.LogWarning("ProjectileTrajectoryCalculator: Projectile will never reach ground level!");
+            // Не выводим предупреждение, так как это нормальная ситуация (например, при горизонтальном полете)
             return Vector3.zero;
         }
         

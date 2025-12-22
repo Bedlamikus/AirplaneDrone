@@ -4961,6 +4961,8 @@ MonoBehaviour:
   particleObject: {fileID: 1379328682865931236}
   delaySeconds: 1
   maxFlightTime: 15
+  explosionRadius: 10
+  explosionForce: 30
 --- !u!54 &5313471508384793645
 Rigidbody:
   m_ObjectHideFlags: 0

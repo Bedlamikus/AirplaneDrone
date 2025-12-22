@@ -6,7 +6,6 @@ public class Scenario : MonoBehaviour
     [Header("References")]
     [SerializeField] private Transform airplaneSpawnPoint; // Точка спавна самолета
     [SerializeField] private AirplaneController airplane; // Ссылка на самолет
-    [SerializeField] private TargetManager targetManager; // Менеджер целей для этого сценария
     [SerializeField] private TMP_Text endMessageText; // UI текст сообщения об окончании сценария
     [SerializeField] private TMP_Text timeMessageText; // UI текст сообщения со временем прохождения
     [SerializeField] private GameObject endMessageUI; // UI объект сообщения (GameObject с TMP_Text)
@@ -90,16 +89,15 @@ public class Scenario : MonoBehaviour
     private bool isScenarioActive = false;
     private float scenarioStartTime = 0f;
     private float scenarioEndTime = 0f;
+    private Damaged[] cachedDamagedObjects; // Кешированный массив объектов Damaged в сценарии
 
     private void OnEnable()
     {
-        GlobalEvents.OnAllTargetsCompleted.AddListener(OnAllTargetsCompleted);
         GlobalEvents.OnAirplaneOutOfBounds.AddListener(OnAirplaneOutOfBounds);
     }
 
     private void OnDisable()
     {
-        GlobalEvents.OnAllTargetsCompleted.RemoveListener(OnAllTargetsCompleted);
         GlobalEvents.OnAirplaneOutOfBounds.RemoveListener(OnAirplaneOutOfBounds);
     }
 
@@ -118,12 +116,36 @@ public class Scenario : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Обработчик события завершения всех целей
-    /// </summary>
-    private void OnAllTargetsCompleted()
+    private void Update()
     {
-        EndScenario();
+        // Проверяем, все ли объекты Damaged скрыты, если сценарий активен
+        if (isScenarioActive && cachedDamagedObjects != null)
+        {
+            CheckAllDamagedHidden();
+        }
+    }
+    
+    /// <summary>
+    /// Проверка, все ли объекты Damaged скрыты
+    /// </summary>
+    private void CheckAllDamagedHidden()
+    {
+        // Проверяем, все ли объекты скрыты
+        bool allHidden = true;
+        foreach (var damaged in cachedDamagedObjects)
+        {
+            if (damaged != null && damaged.gameObject.activeSelf)
+            {
+                allHidden = false;
+                break;
+            }
+        }
+        
+        // Если все объекты скрыты, завершаем сценарий
+        if (allHidden)
+        {
+            EndScenario();
+        }
     }
 
     /// <summary>
@@ -176,6 +198,8 @@ public class Scenario : MonoBehaviour
             return;
         }
 
+        Debug.Log($"Scenario: RespawnAirplane called, moving from {airplane.transform.position} to {airplaneSpawnPoint.position}");
+
         // Сбрасываем позицию и поворот самолета
         airplane.transform.position = airplaneSpawnPoint.position;
         airplane.transform.rotation = airplaneSpawnPoint.rotation;
@@ -190,7 +214,16 @@ public class Scenario : MonoBehaviour
             rb.velocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
+        
+        // Скрываем сообщение о выходе за границы
+        if (outOfBoundsMessageUI != null)
+        {
+            outOfBoundsMessageUI.SetActive(false);
+        }
+        
+        Debug.Log($"Scenario: Airplane respawned at {airplane.transform.position}");
 
+        GlobalEvents.OnScenarioStart.Invoke();
     }
 
     /// <summary>
@@ -202,10 +235,16 @@ public class Scenario : MonoBehaviour
         scenarioStartTime = Time.time;
         scenarioEndTime = 0f;
 
-        // Сбрасываем и активируем цели в менеджере целей
-        if (targetManager != null)
+        // Кешируем все объекты Damaged в сценарии при первом запуске или восстанавливаем их
+        if (cachedDamagedObjects == null || cachedDamagedObjects.Length == 0)
         {
-            targetManager.ResetAllTargets();
+            cachedDamagedObjects = GetComponentsInChildren<Damaged>();
+            Debug.Log($"Scenario: Cached {cachedDamagedObjects?.Length ?? 0} Damaged objects");
+        }
+        else
+        {
+            // Восстанавливаем все объекты Damaged
+            RestoreAllDamaged();
         }
 
         // Выключаем сообщение об окончании если оно было включено
@@ -316,6 +355,24 @@ public class Scenario : MonoBehaviour
     public bool IsScenarioActive()
     {
         return isScenarioActive;
+    }
+    
+    /// <summary>
+    /// Восстановить все объекты Damaged в начальное состояние
+    /// </summary>
+    private void RestoreAllDamaged()
+    {
+        if (cachedDamagedObjects == null) return;
+        
+        foreach (var damaged in cachedDamagedObjects)
+        {
+            if (damaged != null)
+            {
+                damaged.Reset();
+            }
+        }
+        
+        Debug.Log($"Scenario: Restored {cachedDamagedObjects.Length} Damaged objects");
     }
 }
 
