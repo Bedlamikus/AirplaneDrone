@@ -18,13 +18,7 @@ public static class GlobalEvents
     // Событие перезапуска текущего сценария
     public static UnityEvent OnRestartCurrentScenario = new();
     
-    // Событие выстрела снаряда
-    public static UnityEvent OnFire = new();
-
-    // Событие передачи скорости самолета (передается вектор скорости)
-
-    public static UnityEvent<Vector3> OnAirplaneVelocity = new();
-
+    // Событие старта сценария (используется для сброса флагов)
     public static UnityEvent OnScenarioStart = new();
 }
 

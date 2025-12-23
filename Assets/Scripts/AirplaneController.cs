@@ -10,24 +10,10 @@ public class AirplaneController : MonoBehaviour
     [SerializeField] private float rollSpeed = 50f;
     [SerializeField] private float forceArround = 50f;
 
-    [Header("Projectile Landing Marker")]
-    [SerializeField] private Transform landingPointMarker; // Дочерний объект для визуализации места падения
-    [SerializeField] private Transform projectileSpawnPoint; // Точка спавна снаряда (если есть)
-    [SerializeField] private float landingMarkerMoveSpeed = 5f; // Скорость плавного перемещения маркера
-    [SerializeField] private float groundLevel = 0f; // Уровень земли
-
-    [Header("Projectile Settings")]
-    [SerializeField] private GameObject projectilePrefab; // Префаб снаряда
-    [SerializeField] private float projectileRespawnTime = 3f; // Время респавна снаряда в секундах
-
     [SerializeField] private InputPlayer inputPlayer;
 
     private Rigidbody rb;
     private bool isPaused = false;
-    private Vector3 calculatedLandingPoint = Vector3.zero;
-    private bool hasValidLandingPoint = false;
-    private Projectile currentProjectile = null; // Текущий снаряд
-    private bool isRespawning = false; // Флаг процесса респавна
     private bool isOutOfBounds = false; // Флаг выхода за границы
 
     private void Start()
@@ -44,91 +30,10 @@ public class AirplaneController : MonoBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         rb.useGravity = false; // Отключаем гравитацию для самолета
         
-        // Подписываемся на событие выстрела, чтобы передать скорость
-        GlobalEvents.OnFire.AddListener(OnFireEvent);
-        
         // Подписываемся на события выхода за границы и рестарта сценария
         GlobalEvents.OnAirplaneOutOfBounds.AddListener(OnAirplaneOutOfBounds);
         GlobalEvents.OnRestartCurrentScenario.AddListener(OnRestartScenario);
-        
-        // Скрываем маркер места падения при старте
-        if (landingPointMarker != null)
-        {
-            landingPointMarker.gameObject.SetActive(false);
-        }
-        
-        // Ищем существующий снаряд в дочерних объектах или создаем новый
-        FindOrSpawnProjectile();
     }
-    
-    private void FindOrSpawnProjectile()
-    {
-        Debug.Log("AirplaneController: FindOrSpawnProjectile called");
-        
-        // Ищем существующий снаряд в дочерних объектах
-        currentProjectile = GetComponentInChildren<Projectile>();
-        
-        if (currentProjectile != null)
-        {
-            Debug.Log($"AirplaneController: Found existing projectile: {currentProjectile.name}");
-        }
-        else
-        {
-            Debug.Log("AirplaneController: No existing projectile found");
-        }
-        
-        // Если снаряда нет, создаем новый из префаба
-        if (currentProjectile == null)
-        {
-            if (projectilePrefab != null)
-            {
-                Debug.Log($"AirplaneController: Spawning new projectile from prefab: {projectilePrefab.name}");
-                SpawnProjectile();
-            }
-            else
-            {
-                Debug.LogWarning("AirplaneController: Projectile prefab is not assigned!");
-            }
-        }
-    }
-    
-    private void SpawnProjectile()
-    {
-        if (projectilePrefab == null)
-        {
-            Debug.LogError("AirplaneController: Cannot spawn projectile - prefab is null!");
-            return;
-        }
-        
-        Debug.Log("AirplaneController: SpawnProjectile called");
-        
-        // Определяем позицию спавна
-        Vector3 spawnPosition = projectileSpawnPoint != null ? projectileSpawnPoint.position : transform.position;
-        Quaternion spawnRotation = projectileSpawnPoint != null ? projectileSpawnPoint.rotation : transform.rotation;
-        
-        Debug.Log($"AirplaneController: Spawning projectile at position: {spawnPosition}, rotation: {spawnRotation}");
-        
-        // Создаем снаряд из префаба
-        GameObject projectileObj = Instantiate(projectilePrefab, spawnPosition, spawnRotation);
-        Debug.Log($"AirplaneController: Projectile instantiated: {projectileObj.name}");
-        
-        // Привязываем к самолету
-        projectileObj.transform.SetParent(transform);
-        Debug.Log($"AirplaneController: Projectile parent set to: {transform.name}");
-        
-        // Получаем компонент Projectile
-        currentProjectile = projectileObj.GetComponent<Projectile>();
-        
-        if (currentProjectile == null)
-        {
-            Debug.LogError("AirplaneController: Projectile prefab doesn't have Projectile component!");
-        }
-        else
-        {
-            Debug.Log($"AirplaneController: Projectile component found: {currentProjectile.name}");
-        }
-    }
-
     private void FixedUpdate()
     {
         // Не обновляем физику, если самолет на паузе или вышел за границы
@@ -164,87 +69,6 @@ public class AirplaneController : MonoBehaviour
         }
     }
     
-    private void Update()
-    {
-        // Не обновляем ничего, если самолет вышел за границы
-        if (isOutOfBounds) return;
-        
-        // Обновляем маркер места падения на основе текущей скорости самолета
-        if (landingPointMarker != null && !isPaused && rb != null)
-        {
-            UpdateLandingMarker();
-        }
-    }
-    
-    private void UpdateLandingMarker()
-    {
-        UpdateLandingMarker(false);
-    }
-    
-    /// <summary>
-    /// Обновить маркер места падения
-    /// </summary>
-    /// <param name="instant">Если true, маркер переместится мгновенно, иначе плавно</param>
-    private void UpdateLandingMarker(bool instant)
-    {
-        // Получаем позицию точки выстрела (если есть projectileSpawnPoint, иначе используем позицию самолета)
-        Vector3 firePosition = projectileSpawnPoint != null ? projectileSpawnPoint.position : transform.position;
-        Vector3 currentVelocity = rb.velocity;
-        
-        // Рассчитываем точку падения на основе текущей скорости
-        calculatedLandingPoint = ProjectileTrajectoryCalculator.CalculateLandingPoint(
-            firePosition,
-            currentVelocity,
-            Physics.gravity,
-            groundLevel
-        );
-        
-        hasValidLandingPoint = calculatedLandingPoint != Vector3.zero;
-        
-        // Показываем маркер, если есть валидная точка падения
-        if (hasValidLandingPoint)
-        {
-            if (!landingPointMarker.gameObject.activeSelf)
-            {
-                landingPointMarker.gameObject.SetActive(true);
-            }
-            
-            // Перемещаем маркер к расчетной точке
-            if (instant)
-            {
-                // Мгновенное перемещение
-                landingPointMarker.position = calculatedLandingPoint;
-            }
-            else
-            {
-                // Плавное перемещение
-                landingPointMarker.position = Vector3.MoveTowards(
-                    landingPointMarker.position,
-                    calculatedLandingPoint,
-                    landingMarkerMoveSpeed * Time.deltaTime
-                );
-            }
-        }
-        else
-        {
-            // Скрываем маркер, если нет валидной точки падения (снаряд не достигнет уровня земли)
-            if (landingPointMarker.gameObject.activeSelf)
-            {
-                landingPointMarker.gameObject.SetActive(false);
-            }
-        }
-    }
-    
-    /// <summary>
-    /// Принудительно обновить маркер места падения (мгновенно)
-    /// </summary>
-    public void ForceUpdateLandingMarker()
-    {
-        if (landingPointMarker != null && rb != null)
-        {
-            UpdateLandingMarker(true);
-        }
-    }
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -295,62 +119,6 @@ public class AirplaneController : MonoBehaviour
             rb.isKinematic = false; // Размораживаем физику
         }
     }
-    
-    private void OnFireEvent()
-    {
-        Debug.Log("AirplaneController: OnFireEvent called");
-        
-        // При выстреле передаем текущую скорость самолета
-        if (rb != null)
-        {
-            GlobalEvents.OnAirplaneVelocity?.Invoke(rb.velocity);
-            Debug.Log($"AirplaneController: Airplane velocity sent: {rb.velocity}");
-        }
-        else
-        {
-            Debug.LogWarning("AirplaneController: Rigidbody is null, cannot send velocity");
-        }
-        
-        // Если есть текущий снаряд и не идет процесс респавна, запускаем респавн через N секунд
-        if (currentProjectile != null && !isRespawning)
-        {
-            Debug.Log($"AirplaneController: Projectile fired, starting respawn routine in {projectileRespawnTime} seconds");
-            currentProjectile = null; // Очищаем ссылку на выпущенный снаряд
-            StartCoroutine(RespawnProjectileRoutine());
-        }
-        else if (currentProjectile == null)
-        {
-            Debug.LogWarning("AirplaneController: No current projectile found when firing!");
-        }
-        else if (isRespawning)
-        {
-            Debug.Log("AirplaneController: Already respawning, skipping");
-        }
-    }
-    
-    private IEnumerator RespawnProjectileRoutine()
-    {
-        if (isRespawning)
-        {
-            Debug.LogWarning("AirplaneController: RespawnProjectileRoutine called but already respawning!");
-            yield break; // Предотвращаем множественные респавны
-        }
-        
-        Debug.Log($"AirplaneController: Starting respawn routine, waiting {projectileRespawnTime} seconds");
-        isRespawning = true;
-        
-        // Ждем N секунд
-        yield return new WaitForSeconds(projectileRespawnTime);
-        
-        Debug.Log("AirplaneController: Respawn wait finished, spawning new projectile");
-        
-        // Создаем новый снаряд
-        SpawnProjectile();
-        
-        isRespawning = false;
-        Debug.Log("AirplaneController: Respawn routine completed");
-    }
-    
     /// <summary>
     /// Обработчик события выхода самолета за границы
     /// </summary>
@@ -385,7 +153,6 @@ public class AirplaneController : MonoBehaviour
     private void OnDestroy()
     {
         // Отписываемся от событий при уничтожении
-        GlobalEvents.OnFire.RemoveListener(OnFireEvent);
         GlobalEvents.OnAirplaneOutOfBounds.RemoveListener(OnAirplaneOutOfBounds);
         GlobalEvents.OnRestartCurrentScenario.RemoveListener(OnRestartScenario);
     }
