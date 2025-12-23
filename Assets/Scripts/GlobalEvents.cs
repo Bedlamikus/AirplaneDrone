@@ -20,5 +20,8 @@ public static class GlobalEvents
     
     // Событие старта сценария (используется для сброса флагов)
     public static UnityEvent OnScenarioStart = new();
+    
+    // Событие завершения генерации мира
+    public static UnityEvent OnWorldGenerationComplete = new();
 }
 

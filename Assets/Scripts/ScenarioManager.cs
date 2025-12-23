@@ -12,12 +12,14 @@ public class ScenarioManager : MonoBehaviour
     {
         GlobalEvents.OnStartNewScenario.AddListener(OnStartNewScenario);
         GlobalEvents.OnRestartCurrentScenario.AddListener(OnRestartCurrentScenario);
+        GlobalEvents.OnWorldGenerationComplete.AddListener(OnWorldGenerationComplete);
     }
 
     private void OnDisable()
     {
         GlobalEvents.OnStartNewScenario.RemoveListener(OnStartNewScenario);
         GlobalEvents.OnRestartCurrentScenario.RemoveListener(OnRestartCurrentScenario);
+        GlobalEvents.OnWorldGenerationComplete.RemoveListener(OnWorldGenerationComplete);
     }
 
     private void Start()
@@ -31,7 +33,16 @@ public class ScenarioManager : MonoBehaviour
             }
         }
 
-        // Активируем и запускаем первый сценарий
+        // НЕ запускаем сценарий сразу - ждем завершения генерации мира
+        // Сценарий запустится в OnWorldGenerationComplete()
+    }
+    
+    /// <summary>
+    /// Обработчик события завершения генерации мира
+    /// </summary>
+    private void OnWorldGenerationComplete()
+    {
+        // Запускаем первый сценарий только после завершения генерации мира
         if (scenarios.Count > 0 && scenarios[0] != null)
         {
             StartScenario(0);

@@ -63,8 +63,8 @@ public class WorldManager : MonoBehaviour
         // Создаем данные мира
         worldData = new WorldData();
         
-        // Генерируем каньон (синхронно, так как это быстро)
-        CanyonGenerator.GenerateCanyon(worldData, seed);
+        // Генерируем каньон в локальных координатах (относительно позиции WorldManager)
+        CanyonGenerator.GenerateCanyon(worldData, seed, transform.position);
         
         Debug.Log($"WorldManager: Мир сгенерирован. Размер: {WorldData.WORLD_WIDTH}x{WorldData.WORLD_HEIGHT}x{WorldData.WORLD_DEPTH}");
         
@@ -120,6 +120,9 @@ public class WorldManager : MonoBehaviour
         Debug.Log($"WorldManager: Все чанки созданы! Всего: {generatedChunks}");
         isGenerating = false;
         UpdateProgress(1f);
+        
+        // Вызываем событие завершения генерации мира
+        GlobalEvents.OnWorldGenerationComplete?.Invoke();
     }
     
     /// <summary>

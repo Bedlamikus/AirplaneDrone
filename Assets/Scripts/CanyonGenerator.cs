@@ -7,16 +7,17 @@ public static class CanyonGenerator
 {
     // Параметры генерации каньона
     private const float CANYON_WIDTH = 40f; // Ширина каньона в блоках
-    private const float CANYON_HEIGHT = 25f; // Высота каньона в блоках
-    private const float WALL_HEIGHT = 5f; // Высота стен над дном каньона
+    private const float CANYON_BOTTOM_HEIGHT = 5f; // Высота дна каньона (низкая ложбина)
+    private const float CANYON_TOP_HEIGHT = 25f; // Высота вершин склонов
+    private const float SLOPE_STEEPNESS = 0.8f; // Крутизна склонов (0-1, где 1 = вертикально)
     private const float BRANCH_PROBABILITY = 0.15f; // Вероятность ветвления на каждом чанке
     private const float CURVE_INTENSITY = 0.3f; // Интенсивность изгибов
     private const float NOISE_SCALE = 0.1f; // Масштаб шума для неровностей
     
     /// <summary>
-    /// Генерирует весь мир-каньон
+    /// Генерирует весь мир-каньон в локальных координатах
     /// </summary>
-    public static void GenerateCanyon(WorldData worldData, int seed = 0)
+    public static void GenerateCanyon(WorldData worldData, int seed = 0, Vector3 worldOrigin = default)
     {
         Random.InitState(seed);
         
@@ -24,7 +25,8 @@ public static class CanyonGenerator
         float[] canyonCenterX = new float[WorldData.WORLD_DEPTH];
         float[] canyonWidth = new float[WorldData.WORLD_DEPTH];
         
-        // Начальная позиция каньона (по центру по X)
+        // Начальная позиция каньона (по центру по X) в локальных координатах
+        // Учитываем позицию WorldManager, но генерируем относительно (0,0,0)
         float currentX = WorldData.WORLD_WIDTH / 2f;
         float currentWidth = CANYON_WIDTH;
         
@@ -83,7 +85,7 @@ public static class CanyonGenerator
             }
         }
         
-        // Генерируем блоки
+        // Генерируем блоки с наклонными склонами
         for (int x = 0; x < WorldData.WORLD_WIDTH; x++)
         {
             for (int z = 0; z < WorldData.WORLD_DEPTH; z++)
@@ -92,64 +94,56 @@ public static class CanyonGenerator
                 float width = canyonWidth[z];
                 float distanceFromCenter = Mathf.Abs(x - centerX);
                 
-                // Определяем, находится ли позиция внутри каньона
-                bool isInCanyon = distanceFromCenter < width / 2f;
+                float surfaceHeight;
                 
-                if (isInCanyon)
+                // Проверяем, находимся ли мы внутри каньона
+                if (distanceFromCenter < width / 2f)
                 {
-                    // Внутри каньона - создаем дно и воздух
-                    int bottomY = Mathf.RoundToInt(CANYON_HEIGHT);
+                    // ВНУТРИ КАНЬОНА: создаем наклонные склоны
+                    // В центре - низкая ложбина, по краям каньона - высокие склоны
+                    float normalizedDistance = distanceFromCenter / (width / 2f); // 0 в центре, 1 на краю каньона
                     
-                    // Дно каньона (блоки)
-                    for (int y = 0; y <= bottomY; y++)
-                    {
-                        int blockType = WorldData.BLOCK_STONE;
-                        if (y == bottomY)
-                        {
-                            blockType = WorldData.BLOCK_GRASS; // Верхний слой - трава
-                        }
-                        else if (y >= bottomY - 2)
-                        {
-                            blockType = WorldData.BLOCK_DIRT; // Несколько слоев земли
-                        }
-                        
-                        worldData.SetBlock(x, y, z, blockType);
-                    }
-                    
-                    // Воздух выше дна
-                    for (int y = bottomY + 1; y < WorldData.WORLD_HEIGHT; y++)
-                    {
-                        worldData.SetBlock(x, y, z, WorldData.BLOCK_AIR);
-                    }
+                    // Высота поверхности: в центре низко (ложбина), по краям каньона высоко (склоны)
+                    // Используем квадратичную кривую для плавных склонов
+                    float heightFactor = normalizedDistance * normalizedDistance; // Квадратичная кривая для плавных склонов
+                    surfaceHeight = Mathf.Lerp(CANYON_BOTTOM_HEIGHT, CANYON_TOP_HEIGHT, heightFactor);
                 }
                 else
                 {
-                    // Вне каньона - заполняем каменными блоками
-                    // Высота стен зависит от расстояния от центра каньона
-                    float wallHeight = CANYON_HEIGHT + WALL_HEIGHT;
-                    float distanceFactor = (distanceFromCenter - width / 2f) / (WorldData.WORLD_WIDTH / 2f);
-                    int maxY = Mathf.RoundToInt(wallHeight * (1f - distanceFactor * 0.3f));
+                    // ВНЕ КАНЬОНА: высокая ровная поверхность
+                    surfaceHeight = CANYON_TOP_HEIGHT;
+                }
+                
+                // Добавляем небольшие неровности для реалистичности
+                float noise = Mathf.PerlinNoise(x * NOISE_SCALE, z * NOISE_SCALE) * 1.5f - 0.75f;
+                surfaceHeight += noise;
+                
+                int surfaceY = Mathf.RoundToInt(surfaceHeight);
+                surfaceY = Mathf.Clamp(surfaceY, 1, WorldData.WORLD_HEIGHT - 1);
+                
+                // Заполняем блоки от дна до поверхности
+                for (int y = 0; y <= surfaceY; y++)
+                {
+                    int blockType = WorldData.BLOCK_STONE;
                     
-                    for (int y = 0; y < maxY && y < WorldData.WORLD_HEIGHT; y++)
+                    // Верхний слой - трава (только если достаточно высоко)
+                    if (y == surfaceY && surfaceY > CANYON_BOTTOM_HEIGHT + 3)
                     {
-                        int blockType = WorldData.BLOCK_STONE;
-                        if (y == maxY - 1 && maxY > CANYON_HEIGHT + 2)
-                        {
-                            blockType = WorldData.BLOCK_GRASS;
-                        }
-                        else if (y >= maxY - 3 && maxY > CANYON_HEIGHT + 2)
-                        {
-                            blockType = WorldData.BLOCK_DIRT;
-                        }
-                        
-                        worldData.SetBlock(x, y, z, blockType);
+                        blockType = WorldData.BLOCK_GRASS;
+                    }
+                    // Несколько слоев земли под травой
+                    else if (y >= surfaceY - 3 && surfaceY > CANYON_BOTTOM_HEIGHT + 3)
+                    {
+                        blockType = WorldData.BLOCK_DIRT;
                     }
                     
-                    // Воздух выше стен
-                    for (int y = maxY; y < WorldData.WORLD_HEIGHT; y++)
-                    {
-                        worldData.SetBlock(x, y, z, WorldData.BLOCK_AIR);
-                    }
+                    worldData.SetBlock(x, y, z, blockType);
+                }
+                
+                // Воздух выше поверхности
+                for (int y = surfaceY + 1; y < WorldData.WORLD_HEIGHT; y++)
+                {
+                    worldData.SetBlock(x, y, z, WorldData.BLOCK_AIR);
                 }
             }
         }
@@ -188,13 +182,76 @@ public static class CanyonGenerator
             }
         }
         
-        // Верхняя стена (y = WORLD_HEIGHT - 1) - крыша
+        // УБИРАЕМ верхнюю стену (крышу), чтобы каньон был открыт сверху
+        // Каньон должен быть открытым, а не тоннелем
+        
+        // Логируем один слой в разрезе для отладки
+        LogWorldSlice(worldData);
+    }
+    
+    /// <summary>
+    /// Выводит в лог один слой мира в разрезе (поперечное сечение по Z)
+    /// </summary>
+    private static void LogWorldSlice(WorldData worldData)
+    {
+        int sliceZ = WorldData.WORLD_DEPTH / 2; // Берем средний слой по Z
+        
+        Debug.Log($"=== РАЗРЕЗ МИРА на Z={sliceZ} (поперечное сечение по X) ===");
+        Debug.Log($"Размер мира: {WorldData.WORLD_WIDTH} x {WorldData.WORLD_HEIGHT} x {WorldData.WORLD_DEPTH}");
+        
+        // Находим максимальную высоту в этом срезе
+        int maxHeight = 0;
         for (int x = 0; x < WorldData.WORLD_WIDTH; x++)
         {
-            for (int z = 0; z < WorldData.WORLD_DEPTH; z++)
+            for (int y = WorldData.WORLD_HEIGHT - 1; y >= 0; y--)
             {
-                worldData.SetBlock(x, WorldData.WORLD_HEIGHT - 1, z, WorldData.BLOCK_STONE);
+                if (worldData.GetBlock(x, y, sliceZ) != WorldData.BLOCK_AIR)
+                {
+                    if (y > maxHeight) maxHeight = y;
+                    break;
+                }
             }
+        }
+        
+        // Выводим срез по Y (вид сбоку)
+        Debug.Log($"\n--- Поперечное сечение по X (вид сбоку, максимальная высота: {maxHeight}) ---");
+        for (int y = maxHeight; y >= 0; y--)
+        {
+            System.Text.StringBuilder line = new System.Text.StringBuilder();
+            line.Append($"{y:00} | ");
+            
+            for (int x = 0; x < WorldData.WORLD_WIDTH; x++)
+            {
+                int blockType = worldData.GetBlock(x, y, sliceZ);
+                char symbol = GetBlockSymbol(blockType);
+                line.Append(symbol);
+            }
+            
+            Debug.Log(line.ToString());
+        }
+        
+        // Выводим легенду
+        Debug.Log("\n--- Легенда ---");
+        Debug.Log("  = воздух");
+        Debug.Log("# = камень");
+        Debug.Log("~ = трава");
+        Debug.Log(". = земля");
+        Debug.Log("B = bedrock");
+    }
+    
+    /// <summary>
+    /// Возвращает символ для типа блока
+    /// </summary>
+    private static char GetBlockSymbol(int blockType)
+    {
+        switch (blockType)
+        {
+            case WorldData.BLOCK_AIR: return ' ';
+            case WorldData.BLOCK_STONE: return '#';
+            case WorldData.BLOCK_GRASS: return '~';
+            case WorldData.BLOCK_DIRT: return '.';
+            case WorldData.BLOCK_BEDROCK: return 'B';
+            default: return '?';
         }
     }
 }
