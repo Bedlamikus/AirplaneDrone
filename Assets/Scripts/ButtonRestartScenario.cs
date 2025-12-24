@@ -34,6 +34,7 @@ public class ButtonRestartScenario : MonoBehaviour
     /// </summary>
     private void OnButtonClick()
     {
+        Debug.Log("[RESTART] Step 1: ButtonRestartScenario - Button clicked, invoking OnRestartCurrentScenario");
         // Вызываем событие для перезапуска текущего сценария
         GlobalEvents.OnRestartCurrentScenario?.Invoke();
     }

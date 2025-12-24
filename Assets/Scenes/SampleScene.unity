@@ -1504,6 +1504,125 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!1 &124282471
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 124282476}
+  - component: {fileID: 124282475}
+  - component: {fileID: 124282474}
+  - component: {fileID: 124282473}
+  - component: {fileID: 124282472}
+  m_Layer: 0
+  m_Name: EndScenario
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &124282472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124282471}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e35e7e0fd9d23f549bc2fec55465ffff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  oneTimeTrigger: 0
+--- !u!65 &124282473
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124282471}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &124282474
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124282471}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &124282475
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124282471}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &124282476
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124282471}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.6682792, y: 9.997679, z: 130.83861}
+  m_LocalScale: {x: 50, y: 50, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &136782809
 GameObject:
   m_ObjectHideFlags: 0
@@ -5867,6 +5986,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   scenarios:
   - {fileID: 1061387473}
+  endMessageText: {fileID: 863006871}
+  timeMessageText: {fileID: 1071982877}
+  endMessageUI: {fileID: 1765801564}
+  outOfBoundsMessageText: {fileID: 62077221}
+  outOfBoundsMessageUI: {fileID: 664731480}
 --- !u!4 &462383133
 Transform:
   m_ObjectHideFlags: 0
@@ -13628,11 +13752,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   airplaneSpawnPoint: {fileID: 1442264433}
   airplane: {fileID: 1832034079}
-  endMessageText: {fileID: 1071982877}
-  timeMessageText: {fileID: 863006871}
-  endMessageUI: {fileID: 1765801564}
-  outOfBoundsMessageText: {fileID: 62077221}
-  outOfBoundsMessageUI: {fileID: 664731480}
+  worldGenerator: {fileID: 1148822391}
+  OnWorldGenerationComplete:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &1061387474
 Transform:
   m_ObjectHideFlags: 0
@@ -14895,7 +15018,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   worldWidthInChunks: 4
-  worldLengthInChunks: 100
+  worldLengthInChunks: 20
   blockMaterial: {fileID: 2100000, guid: f82e777401a856a42b877c59667d985a, type: 2}
   blockTextureSettings:
   - blockType: 1
@@ -14973,9 +15096,13 @@ MonoBehaviour:
   noiseScale: 0.0559
   heightMultiplier: 17.84
   canyonWidthFactor: 0.501
-  stalagmiteDensity: 0.078
+  stalagmiteDensity: 0.108
   chunksPerFrame: 2
   generateOnStart: 1
+  isGenerating: 0
+  EndGeneration:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1180262714 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8700725330082129686, guid: ccc1ac0dfaa57f84fbff24fa1413670e, type: 3}
@@ -17008,8 +17135,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1442264432}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 5.06, z: 1.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -20075,6 +20202,21 @@ MonoBehaviour:
   inputPlayer: {fileID: 771022434}
   explosionForce: 3
   explosionRadius: 5
+  isDestroyed: 0
+  airplaneParts:
+  - {fileID: 2098696713}
+  - {fileID: 856777622}
+  - {fileID: 1229533098}
+  - {fileID: 1416562170}
+  - {fileID: 1259270905}
+  - {fileID: 1504902989}
+  - {fileID: 932820863}
+  - {fileID: 879045579}
+  - {fileID: 1180262719}
+  - {fileID: 807128031}
+  - {fileID: 152128986}
+  - {fileID: 217044032}
+  spawnPosition: {fileID: 0}
 --- !u!4 &1832034080
 Transform:
   m_ObjectHideFlags: 0
@@ -20084,7 +20226,7 @@ Transform:
   m_GameObject: {fileID: 1832034078}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 5.7, z: 0}
+  m_LocalPosition: {x: 0, y: 5.06, z: 62.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -20115,7 +20257,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
@@ -22547,3 +22689,4 @@ SceneRoots:
   - {fileID: 140263500}
   - {fileID: 1678136721}
   - {fileID: 462383133}
+  - {fileID: 124282476}

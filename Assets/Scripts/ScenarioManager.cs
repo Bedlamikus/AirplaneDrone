@@ -1,10 +1,91 @@
 using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
 
 public class ScenarioManager : MonoBehaviour
 {
     [Header("Scenario Settings")]
     [SerializeField] private List<Scenario> scenarios = new List<Scenario>(); // Список сценариев
+
+    [Header("UI Messages")]
+    [SerializeField] private TMP_Text endMessageText; // UI текст сообщения об окончании сценария
+    [SerializeField] private TMP_Text timeMessageText; // UI текст сообщения со временем прохождения
+    [SerializeField] private GameObject endMessageUI; // UI объект сообщения (GameObject с TMP_Text)
+    [SerializeField] private TMP_Text outOfBoundsMessageText; // UI текст сообщения о выходе за границы / разрушении
+    [SerializeField] private GameObject outOfBoundsMessageUI; // UI объект сообщения о выходе за границы / разрушении
+
+    [Header("End Messages")]
+    private readonly string[] endMessages = new string[]
+    {
+        "Well done, you did it!",
+        "Fantastic job!",
+        "You're amazing!",
+        "Outstanding work!",
+        "You're a superstar!",
+        "Incredible! You made it!",
+        "Wonderful! You succeeded!",
+        "You're brilliant!",
+        "Amazing effort!",
+        "You're incredible!",
+        "Superb! Well played!",
+        "You're awesome!",
+        "Excellent work!",
+        "You did it! Congratulations!",
+        "Terrific job!",
+        "You're fantastic!",
+        "Marvelous! You completed it!",
+        "You're outstanding!",
+        "Wonderful work!",
+        "You're a champion!"
+    };
+
+    private readonly string[] timeMessages = new string[]
+    {
+        "This level you completed in {0} seconds. Keep it up!",
+        "You finished this level in {0} seconds. Way to go!",
+        "Great job! You completed this level in {0} seconds. Keep going!",
+        "Amazing! This level took you {0} seconds. You're doing great!",
+        "Fantastic! You finished in {0} seconds. Keep it up!",
+        "Wonderful! This level completed in {0} seconds. So proud!",
+        "Excellent! You did it in {0} seconds. Keep going!",
+        "Outstanding! {0} seconds for this level. Way to go!",
+        "Incredible! You finished in {0} seconds. Keep it up!",
+        "Superb! This level took {0} seconds. You're amazing!",
+        "Terrific! Completed in {0} seconds. Keep going!",
+        "Brilliant! You finished this level in {0} seconds. So proud!",
+        "Marvelous! {0} seconds for this level. Keep it up!",
+        "Awesome! You completed it in {0} seconds. Way to go!",
+        "Perfect! This level finished in {0} seconds. Keep going!",
+        "Splendid! You did it in {0} seconds. You're amazing!",
+        "Magnificent! Completed this level in {0} seconds. Keep it up!",
+        "Remarkable! {0} seconds for this level. So proud!",
+        "Impressive! You finished in {0} seconds. Keep going!",
+        "Stellar! This level took {0} seconds. Way to go!"
+    };
+
+    private readonly string[] outOfBoundsMessages = new string[]
+    {
+        "You went out of bounds! Stay in the zone!",
+        "Out of bounds! Please stay within the area!",
+        "You left the safe zone! Get back in bounds!",
+        "Boundary exceeded! Return to the play area!",
+        "You're out of bounds! Stay within limits!",
+        "Boundary violation! Please stay inside!",
+        "You went too far! Keep within bounds!",
+        "Out of range! Stay in the designated area!",
+        "Boundary crossed! Return to safe zone!",
+        "You're outside the zone! Get back in!",
+        "Boundary exceeded! Stay within limits!",
+        "Out of bounds detected! Return to play area!",
+        "You left the safe area! Stay in bounds!",
+        "Boundary violation! Get back inside!",
+        "You're out of range! Stay within the zone!",
+        "Boundary crossed! Please stay inside!",
+        "Out of bounds! Keep within the area!",
+        "You went too far! Stay in bounds!",
+        "Boundary exceeded! Return to safe area!",
+        "Out of zone! Stay within the limits!"
+    };
 
     private int currentScenarioIndex = 0; // Индекс текущего сценария
 
@@ -12,16 +93,34 @@ public class ScenarioManager : MonoBehaviour
     {
         GlobalEvents.OnStartNewScenario.AddListener(OnStartNewScenario);
         GlobalEvents.OnRestartCurrentScenario.AddListener(OnRestartCurrentScenario);
+        GlobalEvents.OnAirplaneOutOfBounds.AddListener(OnAirplaneOutOfBounds);
+        GlobalEvents.OnAirplaneDestroyed.AddListener(OnAirplaneDestroyed);
+        GlobalEvents.OnScenarioEnd.AddListener(OnScenarioEnd);
     }
 
     private void OnDisable()
     {
         GlobalEvents.OnStartNewScenario.RemoveListener(OnStartNewScenario);
         GlobalEvents.OnRestartCurrentScenario.RemoveListener(OnRestartCurrentScenario);
+        GlobalEvents.OnAirplaneOutOfBounds.RemoveListener(OnAirplaneOutOfBounds);
+        GlobalEvents.OnAirplaneDestroyed.RemoveListener(OnAirplaneDestroyed);
+        GlobalEvents.OnScenarioEnd.RemoveListener(OnScenarioEnd);
     }
 
     private void Awake()
     {
+        // Выключаем сообщение об окончании в начале
+        if (endMessageUI != null)
+        {
+            endMessageUI.SetActive(false);
+        }
+        
+        // Выключаем сообщение о выходе за границы / разрушении в начале
+        if (outOfBoundsMessageUI != null)
+        {
+            outOfBoundsMessageUI.SetActive(false);
+        }
+
         // Деактивируем все сценарии на старте, чтобы скрыть дочерние объекты (точки)
         foreach (var scenario in scenarios)
         {
@@ -59,7 +158,24 @@ public class ScenarioManager : MonoBehaviour
     /// </summary>
     private void OnRestartCurrentScenario()
     {
+        Debug.Log("[RESTART] Step 2: ScenarioManager - OnRestartCurrentScenario event received");
         RestartCurrentScenario();
+    }
+
+    /// <summary>
+    /// Обработчик события окончания сценария
+    /// </summary>
+    private void OnScenarioEnd()
+    {
+        // Находим активный сценарий и вызываем EndScenario
+        for (int i = 0; i < scenarios.Count; i++)
+        {
+            if (scenarios[i] != null && scenarios[i].gameObject.activeSelf)
+            {
+                scenarios[i].EndScenario();
+                break;
+            }
+        }
     }
 
     /// <summary>
@@ -99,8 +215,8 @@ public class ScenarioManager : MonoBehaviour
     {
         if (index < 0 || index >= scenarios.Count)
         {
-            Debug.LogWarning($"ScenarioManager: Invalid scenario index {index}! Available scenarios: {scenarios.Count}");
-            return;
+            Debug.LogWarning($"ScenarioManager: Invalid scenario index {index}! Available scenarios: {scenarios.Count}. Starting scenario 0 instead.");
+            index = 0; // Запускаем сценарий с индексом 0, если индекс невалидный
         }
 
         Scenario scenario = scenarios[index];
@@ -112,16 +228,15 @@ public class ScenarioManager : MonoBehaviour
 
         // Активируем текущий сценарий
         scenario.gameObject.SetActive(true);
-
-        Debug.Log($"ScenarioManager: Starting scenario {index}");
-
-        // Респавним самолет в точке спавна сценария
-        // (ШАГ а - скрытие UI/шума происходит в обработчиках OnRestartCurrentScenario,
-        //  которые вызываются ПЕРЕД этим методом через событие от кнопки)
-        scenario.RespawnAirplane();
-
-        // Запускаем сценарий
+        
+        // Устанавливаем ссылку на менеджер в сценарии
+        scenario.SetScenarioManager(this);
         scenario.StartScenario();
+        // Скрываем сообщения при респавне
+        HideMessagesOnRespawn();
+        
+        // Скрываем сообщения при старте сценария
+        HideAllMessages();
     }
 
     /// <summary>
@@ -148,6 +263,8 @@ public class ScenarioManager : MonoBehaviour
     /// </summary>
     public void RestartCurrentScenario()
     {
+        Debug.Log("[RESTART] Step 3: ScenarioManager - RestartCurrentScenario called");
+        
         if (scenarios.Count == 0)
         {
             Debug.LogWarning("ScenarioManager: No scenarios in list!");
@@ -167,12 +284,157 @@ public class ScenarioManager : MonoBehaviour
 
         if (activeScenarioIndex >= 0)
         {
+            Debug.Log($"[RESTART] Step 4: ScenarioManager - Found active scenario at index {activeScenarioIndex}, calling StartScenario");
             // Перезапускаем найденный активный сценарий
             StartScenario(activeScenarioIndex);
         }
-        else
+    }
+
+    /// <summary>
+    /// Обработчик события выхода самолета за границы
+    /// </summary>
+    private void OnAirplaneOutOfBounds()
+    {
+        ShowOutOfBoundsMessage();
+    }
+
+    /// <summary>
+    /// Обработчик события разрушения самолета
+    /// </summary>
+    private void OnAirplaneDestroyed()
+    {
+        ShowDestroyedMessage();
+    }
+
+    /// <summary>
+    /// Показать сообщение о выходе за границы
+    /// </summary>
+    private void ShowOutOfBoundsMessage()
+    {
+        // Выбираем случайное сообщение о выходе за границы
+        if (outOfBoundsMessages.Length > 0)
         {
-            Debug.LogWarning("ScenarioManager: No active scenario found to restart!");
+            int randomIndex = Random.Range(0, outOfBoundsMessages.Length);
+            string selectedMessage = outOfBoundsMessages[randomIndex];
+            
+            if (outOfBoundsMessageText != null)
+            {
+                outOfBoundsMessageText.text = selectedMessage;
+            }
+        }
+
+        // Показываем UI сообщение о выходе за границы
+        if (outOfBoundsMessageUI != null)
+        {
+            outOfBoundsMessageUI.SetActive(true);
+        }
+    }
+
+    /// <summary>
+    /// Показать сообщение о разрушении самолета
+    /// </summary>
+    private void ShowDestroyedMessage()
+    {
+        // Устанавливаем текст сообщения о разрушении
+        if (outOfBoundsMessageText != null)
+        {
+            outOfBoundsMessageText.text = "Самолет разрушен. Давай начнем сначала";
+        }
+
+        // Показываем UI сообщение о разрушении
+        if (outOfBoundsMessageUI != null)
+        {
+            outOfBoundsMessageUI.SetActive(true);
+        }
+    }
+
+    /// <summary>
+    /// Скрыть все сообщения
+    /// </summary>
+    private void HideAllMessages()
+    {
+        // Выключаем сообщение об окончании если оно было включено
+        if (endMessageUI != null)
+        {
+            endMessageUI.SetActive(false);
+        }
+        
+        // Выключаем сообщение о выходе за границы / разрушении если оно было включено
+        if (outOfBoundsMessageUI != null)
+        {
+            outOfBoundsMessageUI.SetActive(false);
+        }
+        
+        // Очищаем текст
+        if (endMessageText != null)
+        {
+            endMessageText.text = "";
+        }
+        
+        if (timeMessageText != null)
+        {
+            timeMessageText.text = "";
+        }
+        
+        if (outOfBoundsMessageText != null)
+        {
+            outOfBoundsMessageText.text = "";
+        }
+    }
+
+    /// <summary>
+    /// Показать сообщение об окончании сценария
+    /// </summary>
+    public void ShowEndScenarioMessage(Scenario scenario)
+    {
+        if (scenario == null) return;
+
+        // Получаем время прохождения сценария
+        float scenarioDuration = scenario.GetScenarioTime();
+        int seconds = Mathf.RoundToInt(scenarioDuration);
+
+        // Выбираем случайное сообщение и показываем его
+        if (endMessages.Length > 0)
+        {
+            int randomIndex = Random.Range(0, endMessages.Length);
+            string selectedMessage = endMessages[randomIndex];
+            
+            if (endMessageText != null)
+            {
+                endMessageText.text = selectedMessage;
+            }
+        }
+
+        // Выбираем случайное сообщение со временем и показываем его
+        if (timeMessages.Length > 0 && timeMessageText != null)
+        {
+            int randomTimeIndex = Random.Range(0, timeMessages.Length);
+            string timeMessage = string.Format(timeMessages[randomTimeIndex], seconds);
+            timeMessageText.text = timeMessage;
+        }
+
+        // Показываем UI сообщение об окончании
+        if (endMessageUI != null)
+        {
+            endMessageUI.SetActive(true);
+        }
+    }
+
+    /// <summary>
+    /// Скрыть сообщения при респавне
+    /// </summary>
+    public void HideMessagesOnRespawn()
+    {
+        // Скрываем UI сообщение
+        if (outOfBoundsMessageUI != null)
+        {
+            outOfBoundsMessageUI.SetActive(false);
+        }
+        
+        // Очищаем текст сообщения
+        if (outOfBoundsMessageText != null)
+        {
+            outOfBoundsMessageText.text = "";
         }
     }
 }

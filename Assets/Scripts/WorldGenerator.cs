@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Events;
 
 /// <summary>
 /// Основной менеджер генерации плоского кубического мира
@@ -53,31 +54,19 @@ public class WorldGenerator : MonoBehaviour
     
     private Dictionary<Vector2Int, Chunk> chunks = new Dictionary<Vector2Int, Chunk>();
     private Queue<Vector2Int> chunksToGenerate = new Queue<Vector2Int>();
-    private bool isGenerating = false;
-    
-    private void Start()
+    public bool isGenerating = true;
+
+    public UnityEvent EndGeneration = new();
+
+    public void GenerateWorld()
     {
         if (useRandomSeed && seed == 0)
         {
             seed = Random.Range(0, int.MaxValue);
         }
-        
-        if (generateOnStart)
-        {
-            // Запускаем генерацию мира после инициализации всех компонентов
-            StartCoroutine(GenerateWorldCoroutine());
-        }
-    }
-    
-    /// <summary>
-    /// Начать генерацию мира
-    /// </summary>
-    public void GenerateWorld()
-    {
-        if (!isGenerating)
-        {
-            StartCoroutine(GenerateWorldCoroutine());
-        }
+
+        // Запускаем генерацию мира после инициализации всех компонентов
+        StartCoroutine(GenerateWorldCoroutine());
     }
     
     /// <summary>
@@ -86,10 +75,7 @@ public class WorldGenerator : MonoBehaviour
     private IEnumerator GenerateWorldCoroutine()
     {
         isGenerating = true;
-        
-        Debug.Log($"WorldGenerator: Starting world generation. Size: {worldWidthInChunks}x{worldLengthInChunks} chunks");
-        Debug.Log($"WorldGenerator: Using seed: {seed}");
-        
+
         // Очищаем старые чанки
         ClearWorld();
         
@@ -133,12 +119,9 @@ public class WorldGenerator : MonoBehaviour
         isGenerating = false;
         Debug.Log("WorldGenerator: World generation complete!");
         Debug.Log($"WorldGenerator: Seed = {seed} (используйте этот seed для воссоздания этого мира)");
-        
-        // Отправляем событие о завершении генерации (если есть)
-        if (GlobalEvents.OnWorldGenerationComplete != null)
-        {
-            GlobalEvents.OnWorldGenerationComplete.Invoke();
-        }
+
+        // Отправляем локальное событие о завершении генерации в сценарий
+        EndGeneration.Invoke();
     }
     
     /// <summary>
@@ -166,6 +149,14 @@ public class WorldGenerator : MonoBehaviour
                     // Вычисляем мировые координаты с учетом центрирования
                     int worldX = chunkX * Chunk.CHUNK_SIZE + x + worldCenterOffsetX;
                     int worldZ = chunkZ * Chunk.CHUNK_SIZE + z + worldCenterOffsetZ;
+                    
+                    // Первый ряд (z=0 в локальных координатах чанка) первого чанка по Z должен быть полностью заполнен блоками камня
+                    // Это соответствует первому ряду мира по локальным координатам
+                    if (chunkZ == 0 && z == 0)
+                    {
+                        chunk.SetBlock(x, y, z, BlockType.Stone);
+                        continue;
+                    }
                     
                     // Вычисляем размер мира по ширине в блоках
                     int worldWidthInBlocks = worldWidthInChunks * Chunk.CHUNK_SIZE;

@@ -15,13 +15,19 @@ public static class GlobalEvents
     // Событие выхода самолета за границы
     public static UnityEvent OnAirplaneOutOfBounds = new();
     
+    // Событие разрушения самолета
+    public static UnityEvent OnAirplaneDestroyed = new();
+    
     // Событие перезапуска текущего сценария
     public static UnityEvent OnRestartCurrentScenario = new();
     
     // Событие старта сценария (используется для сброса флагов)
     public static UnityEvent OnScenarioStart = new();
     
-    // Событие завершения генерации мира
-    public static UnityEvent OnWorldGenerationComplete = new();
+    // Событие окончания сценария
+    public static UnityEvent OnScenarioEnd = new();
+
+    public static UnityEvent Pause = new();
+    public static UnityEvent Resume = new();
 }
 

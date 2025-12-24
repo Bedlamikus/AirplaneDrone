@@ -34,6 +34,7 @@ public class AirplanePart : MonoBehaviour
     /// </summary>
     public void Detach(Vector3 explosionPoint, float explosionForce)
     {
+        Debug.Log($"Part {name}: isDetached = {isDetached}");
         if (isDetached) return;
         
         isDetached = true;
@@ -59,27 +60,25 @@ public class AirplanePart : MonoBehaviour
     /// <summary>
     /// Присоединить часть обратно к самолету (сборка)
     /// </summary>
-    public void Attach(Transform parent)
+    public void Attach()
     {
         if (!isDetached) return;
         
         isDetached = false;
         
-        // Возвращаем к родителю
-        transform.SetParent(parent);
-        
-        // Восстанавливаем исходную позицию и поворот
-        transform.localPosition = originalLocalPosition;
-        transform.localRotation = originalLocalRotation;
-        
-        // Деактивируем физику
+        // Сначала делаем часть кинематической
         if (partRb != null)
         {
             partRb.isKinematic = true;
             partRb.useGravity = false;
-            partRb.velocity = Vector3.zero;
-            partRb.angularVelocity = Vector3.zero;
         }
+        
+        // Возвращаем к родителю
+        transform.SetParent(originalParent);
+        
+        // Восстанавливаем исходную позицию и поворот через transform
+        transform.localPosition = originalLocalPosition;
+        transform.localRotation = originalLocalRotation;
     }
     
     /// <summary>

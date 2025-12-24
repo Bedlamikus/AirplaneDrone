@@ -68,8 +68,10 @@ public class TVStaticController : MonoBehaviour
     
     private void RestartFlag()
     {
+        Debug.Log("[RESTART] Step 10: TVStaticController - RestartFlag called (OnScenarioStart handler)");
         isRestarting = false;
         hasTriggeredOutOfBounds = false;
+        Debug.Log("[RESTART] Step 11: TVStaticController - Restart flags reset, scenario start complete");
     }
     
     /// <summary>
@@ -77,15 +79,11 @@ public class TVStaticController : MonoBehaviour
     /// </summary>
     private void OnRestartScenario()
     {
-        // Сбрасываем позицию игрока в шейдере в 0
-        if (staticMaterial != null)
-        {
-            staticMaterial.SetVector("_PlayerPosition", Vector3.zero);
-        }
+        staticMaterial.SetVector("_PlayerPosition", Vector3.zero);
         
         // Блокируем проверку зоны на 1 секунду
         isRestartCooldown = true;
-        restartCooldownEndTime = Time.time + 1f;
+        restartCooldownEndTime = Time.time + 2f;
     }
 
     private bool isRestarting = false;
