@@ -87,6 +87,30 @@ public class ScenarioManager : MonoBehaviour
         "Out of zone! Stay within the limits!"
     };
 
+    private readonly string[] destroyedMessages = new string[]
+    {
+        "Airplane destroyed! Let's start over!",
+        "Crash! Time to restart!",
+        "The airplane is destroyed. Let's begin again!",
+        "Destruction! Starting fresh!",
+        "Airplane crashed! Let's try again!",
+        "The plane is destroyed. Let's start from the beginning!",
+        "Crash landing! Time to restart!",
+        "Airplane destroyed! Beginning anew!",
+        "The aircraft is destroyed. Let's start over!",
+        "Crash! Let's begin again!",
+        "Airplane destroyed! Starting fresh!",
+        "The plane crashed! Let's try again!",
+        "Destruction! Let's start from the beginning!",
+        "Airplane destroyed! Time to restart!",
+        "Crash! Let's start over!",
+        "The airplane is destroyed. Beginning anew!",
+        "Airplane crashed! Let's begin again!",
+        "Destruction! Let's try again!",
+        "The plane is destroyed. Starting fresh!",
+        "Crash landing! Let's start from the beginning!"
+    };
+
     private int currentScenarioIndex = 0; // Индекс текущего сценария
 
     private void OnEnable()
@@ -335,10 +359,16 @@ public class ScenarioManager : MonoBehaviour
     /// </summary>
     private void ShowDestroyedMessage()
     {
-        // Устанавливаем текст сообщения о разрушении
-        if (outOfBoundsMessageText != null)
+        // Выбираем случайное сообщение о разрушении
+        if (destroyedMessages.Length > 0)
         {
-            outOfBoundsMessageText.text = "Самолет разрушен. Давай начнем сначала";
+            int randomIndex = Random.Range(0, destroyedMessages.Length);
+            string selectedMessage = destroyedMessages[randomIndex];
+            
+            if (outOfBoundsMessageText != null)
+            {
+                outOfBoundsMessageText.text = selectedMessage;
+            }
         }
 
         // Показываем UI сообщение о разрушении

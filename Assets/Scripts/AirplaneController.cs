@@ -49,6 +49,7 @@ public class AirplaneController : MonoBehaviour
         GlobalEvents.OnScenarioStart.AddListener(OnRestartScenario);
         GlobalEvents.Resume.AddListener(OnRestartScenario);
         GlobalEvents.Pause.AddListener(Pause);
+        GlobalEvents.OnScenarioEnd.AddListener(Pause);
     }
     private void FixedUpdate()
     {
@@ -194,6 +195,8 @@ public class AirplaneController : MonoBehaviour
 
     public void Resume()
     {
+        isOutOfBounds = false;
+
         isPaused = false;
         if (rb != null)
         {
