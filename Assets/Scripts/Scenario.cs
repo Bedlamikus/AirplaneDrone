@@ -93,14 +93,16 @@ public class Scenario : MonoBehaviour
     private void OnEnable()
     {
         GlobalEvents.OnAirplaneOutOfBounds.AddListener(OnAirplaneOutOfBounds);
+        GlobalEvents.OnWorldGenerationComplete.AddListener(RespawnAirplane);
     }
 
     private void OnDisable()
     {
         GlobalEvents.OnAirplaneOutOfBounds.RemoveListener(OnAirplaneOutOfBounds);
+        GlobalEvents.OnWorldGenerationComplete.RemoveListener(RespawnAirplane);
     }
 
-    private void Start()
+    private void Awake()
     {
         // Выключаем сообщение об окончании в начале
         if (endMessageUI != null)
@@ -175,7 +177,11 @@ public class Scenario : MonoBehaviour
             outOfBoundsMessageText.text = "";
         }
 
-        // ШАГ б) Сбрасываем позицию и поворот самолета
+        // ШАГ б) Собираем самолет обратно (если был разрушен)
+        // Это должно быть вызвано ДО перемещения, чтобы части вернулись на место
+        airplane.ReassembleAirplane();
+        
+        // ШАГ в) Сбрасываем позицию и поворот самолета
         airplane.transform.position = airplaneSpawnPoint.position;
         airplane.transform.rotation = airplaneSpawnPoint.rotation;
 

@@ -11,10 +11,19 @@ public class AirplaneController : MonoBehaviour
     [SerializeField] private float forceArround = 50f;
 
     [SerializeField] private InputPlayer inputPlayer;
+    
+    [Header("Destruction Settings")]
+    [Tooltip("Сила взрыва при столкновении")]
+    [SerializeField] private float explosionForce = 1000f;
+    [Tooltip("Радиус взрыва")]
+    [SerializeField] private float explosionRadius = 5f;
 
     private Rigidbody rb;
     private bool isPaused = false;
     private bool isOutOfBounds = false; // Флаг выхода за границы
+    private bool isDestroyed = false; // Флаг разрушения самолета
+    private AirplanePart[] airplaneParts; // Массив частей самолета
+    private Transform originalParent; // Исходный родитель для частей
 
     private void Start()
     {
@@ -29,6 +38,15 @@ public class AirplaneController : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         rb.useGravity = false; // Отключаем гравитацию для самолета
+        
+        // Сохраняем исходный родитель для частей
+        originalParent = transform;
+        
+        // Находим все части самолета (дочерние объекты с компонентом AirplanePart)
+        airplaneParts = GetComponentsInChildren<AirplanePart>();
+        
+        // Ставим самолет на паузу на старте
+        Pause();
         
         // Подписываемся на события выхода за границы и рестарта сценария
         GlobalEvents.OnAirplaneOutOfBounds.AddListener(OnAirplaneOutOfBounds);
@@ -74,13 +92,82 @@ public class AirplaneController : MonoBehaviour
     {
         bool obstacle = collision.gameObject.CompareTag("Obstacle");
         if (obstacle == false) return;
+        
+        // Если самолет уже разрушен, не обрабатываем столкновение повторно
+        if (isDestroyed) return;
 
         var forcePoint = collision.contacts[0].point;
-        rb.AddExplosionForce(forceArround,
-            forcePoint,
-            1f);
-
-        Debug.Log($"Contact, position = {forcePoint}, ");
+        
+        // Разрушаем самолет
+        DestroyAirplane(forcePoint);
+        
+        Debug.Log($"AirplaneController: Collision with obstacle at {forcePoint}, airplane destroyed");
+    }
+    
+    /// <summary>
+    /// Разрушить самолет на части
+    /// </summary>
+    private void DestroyAirplane(Vector3 explosionPoint)
+    {
+        if (isDestroyed) return;
+        
+        isDestroyed = true;
+        
+        // Ставим самолет на паузу
+        Pause();
+        
+        // Отделяем все части самолета
+        if (airplaneParts != null && airplaneParts.Length > 0)
+        {
+            foreach (var part in airplaneParts)
+            {
+                if (part != null)
+                {
+                    part.Detach(explosionPoint, explosionForce);
+                }
+            }
+        }
+        
+        // Также применяем силу к основному Rigidbody
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+            rb.useGravity = true;
+            Vector3 direction = (transform.position - explosionPoint).normalized;
+            rb.AddForce(direction * explosionForce, ForceMode.Impulse);
+            rb.AddTorque(Random.insideUnitSphere * explosionForce * 0.5f, ForceMode.Impulse);
+        }
+    }
+    
+    /// <summary>
+    /// Собрать самолет обратно (вызывается при рестарте)
+    /// </summary>
+    public void ReassembleAirplane()
+    {
+        if (!isDestroyed) return;
+        
+        isDestroyed = false;
+        
+        // Собираем все части обратно
+        if (airplaneParts != null && airplaneParts.Length > 0)
+        {
+            foreach (var part in airplaneParts)
+            {
+                if (part != null)
+                {
+                    part.Attach(originalParent);
+                }
+            }
+        }
+        
+        // Восстанавливаем основной Rigidbody
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
     }
 
     private bool isDie = false;
@@ -147,7 +234,10 @@ public class AirplaneController : MonoBehaviour
         // Самолет будет перенесен и разморожен в Scenario.RespawnAirplane()
         isOutOfBounds = false;
         
-        Debug.Log("AirplaneController: Scenario restart - reset out of bounds flag");
+        // Собираем самолет обратно, если он был разрушен
+        ReassembleAirplane();
+        
+        Debug.Log("AirplaneController: Scenario restart - reset out of bounds flag and reassemble airplane");
     }
     
     private void OnDestroy()

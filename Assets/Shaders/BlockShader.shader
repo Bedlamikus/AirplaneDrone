@@ -2,8 +2,7 @@ Shader "Custom/BlockShader"
 {
     Properties
     {
-        _MainTex ("Texture Atlas", 2D) = "white" {}
-        _AtlasSize ("Atlas Size", Int) = 4
+        _MainTex ("Texture Atlas (4x4)", 2D) = "white" {}
     }
     SubShader
     {
@@ -15,7 +14,6 @@ Shader "Custom/BlockShader"
         #pragma target 3.0
         
         sampler2D _MainTex;
-        int _AtlasSize;
         
         struct Input
         {
@@ -24,8 +22,8 @@ Shader "Custom/BlockShader"
         
         void surf (Input IN, inout SurfaceOutputStandard o)
         {
-            // Просто используем UV координаты напрямую
-            // Они уже вычислены в ChunkRenderer для texture atlas
+            // Используем UV координаты напрямую
+            // Они уже вычислены в Chunk для texture atlas 4x4
             fixed4 c = tex2D(_MainTex, IN.uv_MainTex);
             o.Albedo = c.rgb;
             o.Alpha = c.a;
